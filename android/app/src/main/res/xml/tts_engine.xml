@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- SPDX-License-Identifier: MIT
-     TTS engine descriptor. settingsActivity is optional; omitted here since the
-     scaffold ships no settings UI. -->
-<tts-engine xmlns:android="http://schemas.android.com/apk/res/android" />
+     TTS engine descriptor. settingsActivity links the system TTS settings
+     gear icon to the Eloquence settings screen. -->
+<tts-engine xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="com.eloquence.tts.EloquenceSettingsActivity" />

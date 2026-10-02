@@ -4,11 +4,18 @@
  * eloquence_jni.c -- JNI bridge between an Android TextToSpeechService and the
  * converted Apple Eloquence engine (eci.so + language modules).
  *
- * The engine is dlopen'd at runtime from the app's data dir; its ECI C API is
+ * The engine is dlopen'd at runtime from the app's read-only native library
+ * dir (where Gradle installs jniLibs); its ECI C API is
  * resolved by dlsym. Synthesis is pull-based: AddText + Synthesize, with the
  * engine delivering 16-bit PCM through an ECI callback that we accumulate into
  * a Java short[]. The Java side (EloquenceTtsService) feeds that to the
  * platform SynthesisCallback.
+ *
+ * Two directories are involved, passed separately by Java:
+ *   - dataDir: writable files dir holding the generated eci.ini. The engine
+ *     resolves eci.ini relative to cwd, so we chdir() here before eciNew.
+ *   - libDir: applicationInfo.nativeLibraryDir holding eci.so + the language
+ *     modules (execute-allowed; writable app storage is blocked by W^X).
  *
  * Engine quirks handled here mirror examples/speak.c and sd_eloquence:
  *   - RegisterCallback must precede SetOutputBuffer.
@@ -34,7 +41,11 @@ typedef const void *ECIInputText;
 enum ECIMessage        { eciWaveformBuffer = 0 };
 enum ECICallbackReturn { eciDataNotProcessed = 0, eciDataProcessed = 1, eciDataAbort = 2 };
 enum ECIParam          { eciSampleRate = 5, eciLanguageDialect = 9 };
-enum ECIVoiceParam     { eciPitchBaseline = 2, eciSpeed = 6, eciVolume = 7 };
+enum ECIVoiceParam     {
+    eciGender = 0, eciHeadSize = 1, eciPitchBaseline = 2,
+    eciPitchFluctuation = 3, eciRoughness = 4, eciBreathiness = 5,
+    eciSpeed = 6, eciVolume = 7
+};
 typedef enum ECICallbackReturn (*ECICallback)(ECIHand, enum ECIMessage, long, void *);
 
 /* Resolved entry points (names as exported by the converted eci.so). */
@@ -99,21 +110,39 @@ static void *sym(void *lib, const char *name) {
     return p;
 }
 
-/* nativeInit(dataDir, dialect) -> handle (0 on failure).
- * dataDir holds eci.so + the language .so files + eci.ini (abs Path=). */
+/* nativeInit(dataDir, libDir, dialect) -> handle (0 on failure).
+ * dataDir holds the generated eci.ini (engine reads it from cwd);
+ * libDir holds eci.so + the language .so files. */
 JNIEXPORT jlong JNICALL
 Java_com_eloquence_tts_EloquenceNative_nativeInit(JNIEnv *env, jclass clazz,
-                                                  jstring jDataDir, jint dialect) {
+                                                  jstring jDataDir, jstring jLibDir,
+                                                  jint dialect) {
     (void)clazz;
     const char *dataDir = (*env)->GetStringUTFChars(env, jDataDir, NULL);
+    const char *libDir  = (*env)->GetStringUTFChars(env, jLibDir, NULL);
 
     /* The engine resolves eci.ini relative to cwd. */
     if (chdir(dataDir) != 0) LOGE("chdir(%s) failed", dataDir);
 
+    /* eci.so lives in the read-only native lib dir, not in filesDir. Try the
+     * absolute libDir path first, then fall back to the linker search path
+     * (the app's nativeLibraryDir is visible to dlopen on modern Android). */
     char path[1024];
-    snprintf(path, sizeof path, "%s/eci.so", dataDir);
-    void *lib = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+    const char *candidates[4];
+    snprintf(path, sizeof path, "%s/libeci.so", libDir);
+    candidates[0] = path;
+    static char alt[1024];
+    snprintf(alt, sizeof alt, "%s/eci.so", libDir);
+    candidates[1] = alt;
+    candidates[2] = "libeci.so";
+    candidates[3] = "eci.so";
+    void *lib = NULL;
+    for (int i = 0; i < 4 && !lib; i++) {
+        lib = dlopen(candidates[i], RTLD_NOW | RTLD_GLOBAL);
+        if (lib) LOGI("dlopen %s: ok", candidates[i]);
+    }
     (*env)->ReleaseStringUTFChars(env, jDataDir, dataDir);
+    (*env)->ReleaseStringUTFChars(env, jLibDir, libDir);
     if (!lib) { LOGE("dlopen eci.so: %s", dlerror()); return 0; }
 
     Engine *e = (Engine *)calloc(1, sizeof(Engine));
@@ -161,6 +190,39 @@ Java_com_eloquence_tts_EloquenceNative_nativeSetProsody(JNIEnv *env, jclass c,
     if (rate   >= 0) e->SetVoiceParam(e->eci, 0, eciSpeed,        rate);
     if (pitch  >= 0) e->SetVoiceParam(e->eci, 0, eciPitchBaseline, pitch);
     if (volume >= 0) e->SetVoiceParam(e->eci, 0, eciVolume,       volume);
+}
+
+/* Apple voice presets, transcribed from KonaVoicePresets.plist (mirrors
+ * sd_eloquence/src/eci/voices.c). Columns: gender, headSize, pitchBaseline,
+ * pitchFluctuation, roughness, breathiness, volume. Pitch/speed/volume are
+ * owned by the prosody path; the preset sets timbre only. */
+typedef struct { int gender, head, base, fluct, rough, breath, vol; } Preset;
+static const Preset PRESETS[8] = {
+    { 0, 50, 65, 30,  0,  0, 92 },  /* 0 Reed    (Jacques in French) */
+    { 1, 50, 81, 30,  0, 50, 95 },  /* 1 Shelley */
+    { 1, 22, 93, 30,  0, 50, 95 },  /* 2 Sandy   */
+    { 0, 86, 56, 47,  0,  0, 93 },  /* 3 Rocko   */
+    { 1, 56, 89, 35,  0, 40, 95 },  /* 4 Flo     */
+    { 1, 45, 68, 30,  3, 40, 90 },  /* 5 Grandma */
+    { 0, 30, 61, 44, 18, 20, 90 },  /* 6 Grandpa */
+    { 0, 50, 69, 34,  0,  0, 92 },  /* 7 Eddy    */
+};
+
+/* Apply a voice preset's timbre to slot 0. Pitch/speed/volume stay under the
+ * caller's prosody control (call nativeSetProsody afterwards). */
+JNIEXPORT void JNICALL
+Java_com_eloquence_tts_EloquenceNative_nativeSetVoicePreset(JNIEnv *env, jclass c,
+        jlong handle, jint slot) {
+    (void)env; (void)c;
+    Engine *e = (Engine *)(intptr_t)handle;
+    if (!e || !e->SetVoiceParam || slot < 0 || slot > 7) return;
+    const Preset *p = &PRESETS[slot];
+    e->SetVoiceParam(e->eci, 0, eciGender,           p->gender);
+    e->SetVoiceParam(e->eci, 0, eciHeadSize,         p->head);
+    e->SetVoiceParam(e->eci, 0, eciPitchFluctuation, p->fluct);
+    e->SetVoiceParam(e->eci, 0, eciRoughness,        p->rough);
+    e->SetVoiceParam(e->eci, 0, eciBreathiness,      p->breath);
+    LOGI("voice preset %d applied", slot);
 }
 
 /* Synthesize one utterance synchronously; return PCM as a short[] (11025 Hz,

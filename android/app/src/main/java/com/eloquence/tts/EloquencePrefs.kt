@@ -63,7 +63,9 @@ object EloquencePrefs {
         0x00080000, 0x000A0000,
     )
 
-    val SAMPLE_RATES = intArrayOf(11025, 16000, 22050, 44100, 48000)
+    /** Engine-native rates only (ECI eciSampleRate: 0=8k, 1=11025, 2=test).
+     * No software resampling. */
+    val SAMPLE_RATES = intArrayOf(8000, 11025, 16000)
     val VOICE_NAMES = arrayOf(
         "Reed", "Shelley", "Sandy", "Rocko", "Flo", "Grandma", "Grandpa", "Eddy"
     )

@@ -34,6 +34,13 @@ object EloquenceNative {
     external fun nativeEngineVersion(handle: Long): String?
 
     /**
+     * Set the engine-native sample rate via the ECI command
+     * (eciSetParam, eciSampleRate=5: 0=8kHz, 1=11025Hz, 2=test).
+     * @return engine return code (< 0 = rejected).
+     */
+    external fun nativeSetSampleRate(handle: Long, param: Int): Int
+
+    /**
      * Step-by-step init probe: chdir, dlopen attempts (with loader error
      * text), symbols, eciNewEx/eciNew. Always returns a report string.
      */

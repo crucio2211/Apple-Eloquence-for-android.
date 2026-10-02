@@ -207,9 +207,30 @@ class EloquenceTtsService : TextToSpeechService() {
                 EloquenceNative.nativeSetProsody(
                     handle, rate, pitch, volume.coerceIn(0, 100))
 
+                // Engine-native sample rate via the ECI command itself
+                // (eciSampleRate=5: 0=8kHz, 1=11025Hz, 2=test).
+                // No software resampling anywhere in this app.
+                val wantHz = prefs.sampleRate.let {
+                    if (it == 8000 || it == 16000) it else ENGINE_RATE
+                }
+                val wantParam = if (wantHz == 8000) 0 else if (wantHz == 16000) 2 else 1
+                val actualHz = try {
+                    if (EloquenceNative.nativeSetSampleRate(handle, wantParam) < 0) {
+                        Log.w(TAG, "eciSampleRate=$wantParam rejected, fell back to 11025")
+                        EloquenceNative.nativeSetSampleRate(handle, 1)
+                        ENGINE_RATE
+                    } else {
+                        Log.i(TAG, "eciSampleRate=$wantParam accepted ($wantHz Hz)")
+                        wantHz
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "nativeSetSampleRate failed", e)
+                    ENGINE_RATE
+                }
+
                 val pcm = EloquenceNative.nativeSynthesize(handle, encodeForDialect(text, v.dialect))
                 if (pcm == null) { callback.error(); return }
-                deliver(pcm, prefs.sampleRate, callback)
+                deliver(pcm, actualHz, callback)
             } catch (e: Exception) {
                 Log.e(TAG, "synthesis failed", e)
                 try {
@@ -233,13 +254,13 @@ class EloquenceTtsService : TextToSpeechService() {
     }
 
     private fun deliver(pcm: ShortArray, outRate: Int, callback: SynthesisCallback) {
-        val out = if (outRate == ENGINE_RATE) pcm else resample(pcm, ENGINE_RATE, outRate)
+        // PCM is already at the engine-native rate — no resampling.
         callback.start(outRate, AudioFormat.ENCODING_PCM_16BIT, 1)
         val maxBytes = callback.maxBufferSize.coerceAtLeast(2)
-        val bytes = ByteArray(out.size * 2)
-        for (i in out.indices) {
-            bytes[i * 2] = (out[i].toInt() and 0xFF).toByte()
-            bytes[i * 2 + 1] = ((out[i].toInt() shr 8) and 0xFF).toByte()
+        val bytes = ByteArray(pcm.size * 2)
+        for (i in pcm.indices) {
+            bytes[i * 2] = (pcm[i].toInt() and 0xFF).toByte()
+            bytes[i * 2 + 1] = ((pcm[i].toInt() shr 8) and 0xFF).toByte()
         }
         var off = 0
         while (off < bytes.size) {
@@ -248,22 +269,6 @@ class EloquenceTtsService : TextToSpeechService() {
             off += n
         }
         callback.done()
-    }
-
-    /** Linear-interpolation upsampler (engine renders 11025 Hz natively). */
-    private fun resample(pcm: ShortArray, fromRate: Int, toRate: Int): ShortArray {
-        if (pcm.isEmpty() || fromRate == toRate || fromRate <= 0 || toRate <= 0) return pcm
-        val outLen = ((pcm.size.toLong() * toRate) / fromRate).toInt().coerceAtLeast(1)
-        val out = ShortArray(outLen)
-        for (i in out.indices) {
-            val pos = i.toLong() * fromRate
-            val idx = (pos / toRate).toInt().coerceIn(0, pcm.size - 1)
-            val next = (idx + 1).coerceIn(0, pcm.size - 1)
-            val frac = ((pos % toRate).toFloat() / toRate)
-            out[i] = (pcm[idx] * (1f - frac) + pcm[next] * frac).toInt()
-                .coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
-        }
-        return out
     }
 
     /** Encode text in the dialect's own charset (the engine is not UTF-8). */

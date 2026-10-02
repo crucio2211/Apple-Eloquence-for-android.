@@ -8,7 +8,7 @@
     <string name="settings_system_fail">System TTS settings not found on this device.</string>
     <string name="settings_engine_fail">Engine not ready yet. Try again in a moment.</string>
     <string name="settings_sample">Hello from Eloquence.</string>
-    <string name="settings_rate_note">The engine renders at 11025 Hz natively; higher choices are upsampled.</string>
+    <string name="settings_rate_note">Engine-native rates only, set with the ECI command (no resampling). 16000 Hz is a test — falls back to 11025 if the engine rejects it.</string>
     <string name="settings_language">Language</string>
     <string name="settings_language_note">Used when the system asks for a language the engine does not ship.</string>
     <string name="settings_diag">Diagnostics</string>

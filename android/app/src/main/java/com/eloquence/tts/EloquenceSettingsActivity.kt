@@ -316,14 +316,28 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
                         getString(R.string.settings_sample)
                             .toByteArray(Charsets.US_ASCII)
                     }
+                    // Engine-native rate via the ECI command (no resampling).
+                    val wantHz = prefs.sampleRate.let {
+                        if (it == 8000 || it == 16000) it else 11025
+                    }
+                    val wantParam = if (wantHz == 8000) 0 else if (wantHz == 16000) 2 else 1
+                    val actualHz = try {
+                        if (EloquenceNative.nativeSetSampleRate(h, wantParam) < 0) {
+                            EloquenceNative.nativeSetSampleRate(h, 1)
+                            11025
+                        } else wantHz
+                    } catch (e: Exception) {
+                        11025
+                    }
                     val pcm = EloquenceNative.nativeSynthesize(h, bytes)
                     if (pcm == null) {
                         msg = "synth FAILED (null)"
                     } else {
-                        msg = "playing ${pcm.size} samples…"
+                        msg = if (actualHz == wantHz) "playing ${pcm.size} samples @ $actualHz Hz…"
+                            else "16 kHz rejected, playing @ $actualHz Hz…"
                         runOnUiThread { diagText.text = msg }
-                        playPcm(pcm)
-                        msg = "played ${pcm.size} samples"
+                        playPcm(pcm, actualHz)
+                        msg = "played ${pcm.size} samples @ $actualHz Hz"
                     }
                 }
             } catch (e: Throwable) {
@@ -340,12 +354,12 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
         }.start()
     }
 
-    private fun playPcm(pcm: ShortArray) {
+    private fun playPcm(pcm: ShortArray, rateHz: Int = 11025) {
         val minBuf = AudioTrack.getMinBufferSize(
-            11025, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
+            rateHz, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
         @Suppress("DEPRECATION")
         val track = AudioTrack(
-            AudioManager.STREAM_MUSIC, 11025, AudioFormat.CHANNEL_OUT_MONO,
+            AudioManager.STREAM_MUSIC, rateHz, AudioFormat.CHANNEL_OUT_MONO,
             AudioFormat.ENCODING_PCM_16BIT,
             maxOf(minBuf, pcm.size * 2), AudioTrack.MODE_STATIC)
         try {

@@ -339,6 +339,18 @@ Java_com_eloquence_tts_EloquenceNative_nativeEngineVersion(JNIEnv *env, jclass c
     return (*env)->NewStringUTF(env, ver);
 }
 
+/* Set the engine-native sample rate via the ECI command itself
+ * (eciSetParam, eciSampleRate=5: 0=8kHz, 1=11025Hz, 2=test).
+ * Returns the engine's return code (< 0 = rejected). */
+JNIEXPORT jint JNICALL
+Java_com_eloquence_tts_EloquenceNative_nativeSetSampleRate(JNIEnv *env, jclass c,
+        jlong handle, jint param) {
+    (void)env; (void)c;
+    Engine *e = (Engine *)(intptr_t)handle;
+    if (!e || !e->SetParam) return -1;
+    return e->SetParam(e->eci, eciSampleRate, param);
+}
+
 /* Synthesize one utterance synchronously; text arrives as bytes in the
  * dialect's own charset (windows-1252 for Latin scripts, GB18030/Big5/
  * Shift_JIS/EUC-KR for CJK — the engine is an IBM-charset engine, not

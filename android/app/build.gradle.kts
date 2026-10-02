@@ -13,8 +13,8 @@ android {
         applicationId = "com.eloquence.tts"
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.3.1"
+        versionCode = 5
+        versionName = "0.3.2"
 
         ndk {
             // arm64-v8a only by default — it's the validated target (engine
@@ -37,13 +37,15 @@ android {
         }
     }
 
-    // The converted engine .so files (eci.so + lib<lang>.so + libc++_shared.so)
-    // are dropped into src/main/jniLibs/arm64-v8a/ — see android/README.md.
-    // They install into the read-only nativeLibraryDir, where dlopen of
-    // executable code is permitted (writable app storage is not).
+    // The converted engine .so files (libeci.so + lib<lang>.so +
+    // libc++_shared.so) are dropped into src/main/jniLibs/arm64-v8a/ — see
+    // android/README.md. They must be EXTRACTED into the read-only
+    // nativeLibraryDir as real files: the engine opens its language modules
+    // by absolute Path= from eci.ini, and JNI dlopens libeci.so the same
+    // way. With useLegacyPackaging = false the libs stay inside the APK and
+    // nativeLibraryDir ends up empty, so init always fails (handle=0).
     packaging {
-        // Keep the page-aligned engine libs uncompressed so they mmap directly.
-        jniLibs { useLegacyPackaging = false }
+        jniLibs { useLegacyPackaging = true }
     }
 
     buildTypes {

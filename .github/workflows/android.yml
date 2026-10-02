@@ -1,0 +1,103 @@
+# Android APK build for apple-eloquence-elf (fork-friendly)
+#
+# Builds the experimental Android TTS engine APK on GitHub Actions:
+#   1. convert vendor/tvOS-18.2/*.dylib -> android jniLibs (via stage-libs.sh + NDK r27c)
+#   2. build APK with Gradle (no wrapper in repo, so we install Gradle 8.9)
+#
+# Trigger:
+#   - manual workflow_dispatch (gamitin mo ito sa fork mo)
+#   - push sa main/master na humihipo sa android/, macho2elf/, vendor/, o sa file na ito
+
+name: Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - 'android/**'
+      - 'macho2elf/**'
+      - 'vendor/**'
+      - '.github/workflows/android.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    env:
+      NDK_VERSION: 27.2.12479018
+      ANDROID_API: 34
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK + platform + cmake
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          sdkmanager --install \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "ndk;27.2.12479018" \
+            "cmake;3.22.1" \
+            "platform-tools"
+          yes | sdkmanager --licenses || true
+          echo "ANDROID_NDK=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+          ls -la "$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/" | head -20
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm python3-venv python3-pip unzip wget ninja-build
+          if ! command -v llvm-lipo >/dev/null; then
+            LIPO=$(ls /usr/bin/llvm-lipo-* 2>/dev/null | sort -V | tail -1)
+            if [ -z "$LIPO" ]; then
+              echo "no llvm-lipo found" >&2
+              exit 1
+            fi
+            sudo ln -sf "$LIPO" /usr/local/bin/llvm-lipo
+          fi
+          llvm-lipo --version | head -2
+          python3 -m venv venv
+          ./venv/bin/pip install --upgrade pip
+          ./venv/bin/pip install lief
+
+      - name: Convert + stage engine libs
+        run: |
+          export ANDROID_NDK="$ANDROID_HOME/ndk/27.2.12479018"
+          export PATH="$PWD/venv/bin:$PATH"
+          "$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang" --version
+          ./android/stage-libs.sh 24
+          echo "--- staged jniLibs ---"
+          ls -lh android/app/src/main/jniLibs/arm64-v8a/
+
+      - name: Install Gradle 8.9
+        run: |
+          cd /tmp
+          wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip
+          unzip -q gradle-8.9-bin.zip
+          echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
+          /tmp/gradle-8.9/bin/gradle --version
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          export ANDROID_NDK="$ANDROID_HOME/ndk/27.2.12479018"
+          gradle assembleDebug --stacktrace --info
+          echo "--- outputs ---"
+          find app/build/outputs -type f | head -20
+          ls -lh app/build/outputs/apk/debug/
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eloquence-tts-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14

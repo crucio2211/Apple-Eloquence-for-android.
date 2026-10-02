@@ -33,6 +33,12 @@ object EloquenceNative {
     /** Engine version string for an open handle, or null (diagnostics). */
     external fun nativeEngineVersion(handle: Long): String?
 
+    /**
+     * Step-by-step init probe: chdir, dlopen attempts (with loader error
+     * text), symbols, eciNewEx/eciNew. Always returns a report string.
+     */
+    external fun nativeProbe(dataDir: String, libDir: String, dialect: Int): String
+
     /** Synthesize one utterance -> 11025 Hz mono S16 PCM, or null on abort. */
     external fun nativeSynthesize(handle: Long, text: String): ShortArray?
 

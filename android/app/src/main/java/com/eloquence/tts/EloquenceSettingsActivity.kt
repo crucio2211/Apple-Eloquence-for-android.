@@ -245,6 +245,8 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
         Thread {
             val sb = StringBuilder()
             try {
+                sb.append("device: SDK ${android.os.Build.VERSION.SDK_INT} " +
+                    "${android.os.Build.SUPPORTED_ABIS.firstOrNull() ?: "?"}\n")
                 val libDir = applicationInfo.nativeLibraryDir
                 sb.append("libDir: $libDir\n")
                 val sos = try {
@@ -265,37 +267,12 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
                 sb.append("eci.ini: ${if (ini.exists()) "${ini.length()} bytes" else "MISSING"}\n")
                 val prefs = EloquencePrefs.load(this)
                 val dialect = EloquencePrefs.LANGUAGE_DIALECTS[prefs.language]
-                var h = 0L
-                try {
-                    h = EloquenceNative.nativeInit(filesDir.absolutePath, libDir, dialect)
+                val probe = try {
+                    EloquenceNative.nativeProbe(filesDir.absolutePath, libDir, dialect)
                 } catch (e: Throwable) {
-                    sb.append("init EXCEPTION ${e.javaClass.simpleName}: ${e.message}\n")
+                    "probe EXCEPTION ${e.javaClass.simpleName}: ${e.message}\n"
                 }
-                if (h == 0L) {
-                    sb.append("engine init: FAILED (handle=0)\n")
-                } else {
-                    try {
-                        val ver = try {
-                            EloquenceNative.nativeEngineVersion(h)
-                        } catch (_: Exception) {
-                            null
-                        }
-                        sb.append("engine init: ok, eciVersion=${ver ?: "?"}\n")
-                        val pcm = try {
-                            EloquenceNative.nativeSynthesize(h, "Hello.")
-                        } catch (_: Exception) {
-                            null
-                        }
-                        sb.append("synth test: ${
-                            if (pcm != null) "${pcm.size} samples" else "FAILED (null)"
-                        }\n")
-                    } finally {
-                        try {
-                            EloquenceNative.nativeShutdown(h)
-                        } catch (_: Exception) {
-                        }
-                    }
-                }
+                sb.append("--- probe ---\n").append(probe)
             } catch (e: Throwable) {
                 sb.append("EXCEPTION ${e.javaClass.simpleName}: ${e.message}\n")
             }

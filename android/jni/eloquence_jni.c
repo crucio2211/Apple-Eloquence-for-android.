@@ -167,9 +167,16 @@ Java_com_eloquence_tts_EloquenceNative_nativeInit(JNIEnv *env, jclass clazz,
         free(e); dlclose(lib); return 0;
     }
 
-    /* Prefer eciNewEx(dialect) so the language module loads up front. */
-    e->eci = (NewEx && dialect) ? NewEx(dialect) : (New ? New() : NULL);
-    if (!e->eci) { LOGE("eciNew/eciNewEx failed (check eci.ini + ProgStatus)"); free(e); dlclose(lib); return 0; }
+    /* Prefer eciNewEx(dialect) so the language module loads up front.
+     * Fall back to plain eciNew() (the examples/speak.c path): some builds
+     * fail eciNewEx while eciNew still works. */
+    e->eci = NULL;
+    if (NewEx && dialect) {
+        e->eci = NewEx(dialect);
+        if (!e->eci) LOGE("eciNewEx(0x%x) failed, trying eciNew()", dialect);
+    }
+    if (!e->eci) e->eci = New ? New() : NULL;
+    if (!e->eci) { LOGE("eciNew/eciNewEx failed (check eci.ini + ProgStatus)"); free(e); return 0; }
 
     RegisterCallback(e->eci, pcm_cb, e);               /* before SetOutputBuffer */
     e->SetOutputBuffer(e->eci, CHUNK_SAMPLES, e->chunk);
@@ -223,6 +230,70 @@ Java_com_eloquence_tts_EloquenceNative_nativeSetVoicePreset(JNIEnv *env, jclass 
     e->SetVoiceParam(e->eci, 0, eciRoughness,        p->rough);
     e->SetVoiceParam(e->eci, 0, eciBreathiness,      p->breath);
     LOGI("voice preset %d applied", slot);
+}
+
+/* Step-by-step init probe for the on-device diagnostics screen. Reports which
+ * stage fails: chdir, dlopen (with the loader's own error text), missing
+ * symbols, eciNewEx, eciNew. Never throws; always returns a report string. */
+JNIEXPORT jstring JNICALL
+Java_com_eloquence_tts_EloquenceNative_nativeProbe(JNIEnv *env, jclass clazz,
+                                                   jstring jDataDir, jstring jLibDir,
+                                                   jint dialect) {
+    (void)clazz;
+    char out[4096];
+    size_t n = 0;
+#define P(...) do { int w = snprintf(out + n, sizeof(out) - n, __VA_ARGS__); \
+                    if (w > 0) n += (size_t)w; } while (0)
+    const char *dataDir = (*env)->GetStringUTFChars(env, jDataDir, NULL);
+    const char *libDir  = (*env)->GetStringUTFChars(env, jLibDir, NULL);
+
+    P("chdir %s: %s\n", dataDir, chdir(dataDir) == 0 ? "ok" : "FAILED");
+
+    char p0[1024], p1[1024];
+    snprintf(p0, sizeof p0, "%s/libeci.so", libDir);
+    snprintf(p1, sizeof p1, "%s/eci.so", libDir);
+    const char *cands[4] = { p0, p1, "libeci.so", "eci.so" };
+    void *lib = NULL;
+    for (int i = 0; i < 4 && !lib; i++) {
+        dlerror();
+        lib = dlopen(cands[i], RTLD_NOW | RTLD_GLOBAL);
+        if (lib) {
+            P("dlopen %s: ok\n", cands[i]);
+        } else {
+            const char *e = dlerror();
+            char eb[512];
+            snprintf(eb, sizeof eb, "%s", e ? e : "(no error text)");
+            P("dlopen %s: FAILED: %s\n", cands[i], eb);
+        }
+    }
+    (*env)->ReleaseStringUTFChars(env, jDataDir, dataDir);
+    (*env)->ReleaseStringUTFChars(env, jLibDir, libDir);
+    if (!lib) { P("RESULT: dlopen failed\n"); return (*env)->NewStringUTF(env, out); }
+
+    fn_New New = (fn_New)dlsym(lib, "eciNew");
+    fn_NewEx NewEx = (fn_NewEx)dlsym(lib, "eciNewEx");
+    fn_Delete Del = (fn_Delete)dlsym(lib, "eciDelete");
+    P("symbols: eciNew=%s eciNewEx=%s eciDelete=%s\n",
+      New ? "ok" : "MISSING", NewEx ? "ok" : "MISSING", Del ? "ok" : "MISSING");
+    fn_Version Version = (fn_Version)dlsym(lib, "eciVersion");
+    if (Version) { char ver[64] = {0}; Version(ver); P("eciVersion: %s\n", ver); }
+    else P("eciVersion: MISSING\n");
+
+    ECIHand h = NULL;
+    if (NewEx && dialect) {
+        h = NewEx(dialect);
+        P("eciNewEx(0x%x): %s\n", (unsigned)dialect, h ? "ok" : "NULL");
+    } else {
+        P("eciNewEx: skipped (no symbol or dialect=0)\n");
+    }
+    if (!h && New) {
+        h = New();
+        P("eciNew(): %s\n", h ? "ok" : "NULL");
+    }
+    if (h && Del) { Del(h); P("eciDelete: ok\n"); }
+    P("RESULT: %s\n", h ? "ENGINE USABLE" : "ENGINE FAILED");
+    return (*env)->NewStringUTF(env, out);
+#undef P
 }
 
 /* Return the engine version string for an open handle (diagnostics). */

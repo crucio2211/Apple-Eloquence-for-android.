@@ -13,8 +13,8 @@ android {
         applicationId = "com.eloquence.tts"
         minSdk = 24
         targetSdk = 34
-        versionCode = 8
-        versionName = "0.5.1"
+        versionCode = 10
+        versionName = "0.5.3"
 
         ndk {
             // arm64-v8a only by default — it's the validated target (engine

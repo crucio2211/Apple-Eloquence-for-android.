@@ -62,6 +62,26 @@ object EloquencePrefs {
         0x00060000, 0x00060001,
         0x00080000, 0x000A0000,
     )
+    /** Engine module per LANGUAGES entry (lib<module>.so), same order. */
+    val LANGUAGE_MODULES = arrayOf(
+        "enu", "eng",
+        "esp", "esm",
+        "fra", "frc",
+        "deu", "ita",
+        "ptb", "fin",
+        "chs", "cht",
+        "jpn", "kor",
+    )
+    /** Romanizer per LANGUAGES entry (null = none), same order. */
+    val LANGUAGE_ROMANIZERS: Array<String?> = arrayOf(
+        null, null,
+        null, null,
+        null, null,
+        null, null,
+        null, null,
+        "chsrom", "chtrom",
+        "jpnrom", "korrom",
+    )
 
     /** Engine-native rates only (ECI eciSampleRate: 0=8k, 1=11025, 2=test).
      * No software resampling. */

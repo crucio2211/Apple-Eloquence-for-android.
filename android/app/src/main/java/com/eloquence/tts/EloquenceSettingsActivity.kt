@@ -266,9 +266,13 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
                 val ini = File(filesDir, "eci.ini")
                 sb.append("eci.ini: ${if (ini.exists()) "${ini.length()} bytes" else "MISSING"}\n")
                 val prefs = EloquencePrefs.load(this)
-                val dialect = EloquencePrefs.LANGUAGE_DIALECTS[prefs.language]
+                val langIdx = prefs.language.coerceIn(0, EloquencePrefs.LANGUAGES.size - 1)
+                val dialect = EloquencePrefs.LANGUAGE_DIALECTS[langIdx]
                 val probe = try {
-                    EloquenceNative.nativeProbe(filesDir.absolutePath, libDir, dialect)
+                    EloquenceNative.nativeProbe(
+                        filesDir.absolutePath, libDir, dialect,
+                        EloquencePrefs.LANGUAGE_MODULES[langIdx],
+                        EloquencePrefs.LANGUAGE_ROMANIZERS[langIdx])
                 } catch (e: Throwable) {
                     "probe EXCEPTION ${e.javaClass.simpleName}: ${e.message}\n"
                 }

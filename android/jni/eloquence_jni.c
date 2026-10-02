@@ -258,21 +258,36 @@ Java_com_eloquence_tts_EloquenceNative_nativeSetVoicePreset(JNIEnv *env, jclass 
 JNIEXPORT jstring JNICALL
 Java_com_eloquence_tts_EloquenceNative_nativeProbe(JNIEnv *env, jclass clazz,
                                                    jstring jDataDir, jstring jLibDir,
-                                                   jint dialect) {
+                                                   jint dialect, jstring jModule,
+                                                   jstring jRomanizer) {
     (void)clazz;
-    char out[4096];
+    char out[8192];
     size_t n = 0;
 #define P(...) do { int w = snprintf(out + n, sizeof(out) - n, __VA_ARGS__); \
                     if (w > 0) n += (size_t)w; } while (0)
     const char *dataDir = (*env)->GetStringUTFChars(env, jDataDir, NULL);
     const char *libDir  = (*env)->GetStringUTFChars(env, jLibDir, NULL);
+    const char *module  = jModule ? (*env)->GetStringUTFChars(env, jModule, NULL) : NULL;
+    const char *roman   = jRomanizer ? (*env)->GetStringUTFChars(env, jRomanizer, NULL) : NULL;
 
     P("chdir %s: %s\n", dataDir, chdir(dataDir) == 0 ? "ok" : "FAILED");
+    char iniPath[1152];
+    snprintf(iniPath, sizeof iniPath, "%s/eci.ini", dataDir);
+    setenv("ECIINI", iniPath, 1);
+    P("ECIINI=%s (getenv=%s)\n", iniPath, getenv("ECIINI") ? getenv("ECIINI") : "(null)");
+
+    /* Dump eci.ini so a bad Path=/section is visible on-device. */
     {
-        char iniPath[1152];
-        snprintf(iniPath, sizeof iniPath, "%s/eci.ini", dataDir);
-        setenv("ECIINI", iniPath, 1);
-        P("ECIINI=%s\n", iniPath);
+        FILE *f = fopen(iniPath, "r");
+        if (!f) {
+            P("eci.ini: MISSING (fopen failed)\n");
+        } else {
+            char ib[2048];
+            size_t nr = fread(ib, 1, sizeof(ib) - 1, f);
+            fclose(f);
+            ib[nr] = '\0';
+            P("eci.ini (%zu bytes):\n%s\n--- end ini ---\n", nr, ib);
+        }
     }
 
     char p0[1024], p1[1024];
@@ -294,7 +309,7 @@ Java_com_eloquence_tts_EloquenceNative_nativeProbe(JNIEnv *env, jclass clazz,
     }
     (*env)->ReleaseStringUTFChars(env, jDataDir, dataDir);
     (*env)->ReleaseStringUTFChars(env, jLibDir, libDir);
-    if (!lib) { P("RESULT: dlopen failed\n"); return (*env)->NewStringUTF(env, out); }
+    if (!lib) { P("RESULT: dlopen failed\n"); goto done; }
 
     fn_New New = (fn_New)dlsym(lib, "eciNew");
     fn_NewEx NewEx = (fn_NewEx)dlsym(lib, "eciNewEx");
@@ -318,9 +333,44 @@ Java_com_eloquence_tts_EloquenceNative_nativeProbe(JNIEnv *env, jclass clazz,
     P("klattHooks=%s clearInput=%s\n",
       dlsym(lib, "eciRegisterKlattHooks2") ? "present" : "MISSING",
       dlsym(lib, "eciClearInput") ? "present" : "MISSING");
+    /* Direct-load the language (+romanizer) libs the engine will need.
+     * If THESE fail while libeci.so loads, the .so files or their
+     * dependencies are the problem — not eci.ini. */
+    if (module && module[0]) {
+        char mp[1152];
+        snprintf(mp, sizeof mp, "%s/lib%s.so", libDir, module);
+        dlerror();
+        void *lm = dlopen(mp, RTLD_NOW | RTLD_GLOBAL);
+        if (lm) P("dlopen lib%s.so: ok\n", module);
+        else {
+            const char *e = dlerror();
+            char eb[512];
+            snprintf(eb, sizeof eb, "%s", e ? e : "(no error text)");
+            P("dlopen lib%s.so: FAILED: %s\n", module, eb);
+        }
+    } else {
+        P("lang lib: skipped (no module name)\n");
+    }
+    if (roman && roman[0]) {
+        char rp[1152];
+        snprintf(rp, sizeof rp, "%s/lib%s.so", libDir, roman);
+        dlerror();
+        void *rm = dlopen(rp, RTLD_NOW | RTLD_GLOBAL);
+        if (rm) P("dlopen lib%s.so: ok\n", roman);
+        else {
+            const char *e = dlerror();
+            char eb[512];
+            snprintf(eb, sizeof eb, "%s", e ? e : "(no error text)");
+            P("dlopen lib%s.so: FAILED: %s\n", roman, eb);
+        }
+    }
+
     /* NOTE: deliberately NOT calling eciDelete here — on this build it can
      * join an already-destroyed worker thread and SIGABRT the process. */
     P("RESULT: %s\n", h ? "ENGINE USABLE" : "ENGINE FAILED");
+done:
+    if (module) (*env)->ReleaseStringUTFChars(env, jModule, module);
+    if (roman) (*env)->ReleaseStringUTFChars(env, jRomanizer, roman);
     return (*env)->NewStringUTF(env, out);
 #undef P
 }

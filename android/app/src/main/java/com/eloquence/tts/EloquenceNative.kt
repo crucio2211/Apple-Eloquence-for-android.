@@ -41,10 +41,14 @@ object EloquenceNative {
     external fun nativeSetSampleRate(handle: Long, param: Int): Int
 
     /**
-     * Step-by-step init probe: chdir, dlopen attempts (with loader error
-     * text), symbols, eciNewEx/eciNew. Always returns a report string.
+     * Step-by-step init probe: chdir, ECIINI, eci.ini dump, dlopen attempts
+     * (with loader error text), language-lib loads, symbols,
+     * eciNewEx/eciNew. Always returns a report string.
      */
-    external fun nativeProbe(dataDir: String, libDir: String, dialect: Int): String
+    external fun nativeProbe(
+        dataDir: String, libDir: String, dialect: Int,
+        module: String?, romanizer: String?,
+    ): String
 
     /**
      * Synthesize one utterance. Text arrives as bytes in the dialect's own

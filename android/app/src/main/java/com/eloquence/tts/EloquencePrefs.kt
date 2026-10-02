@@ -38,7 +38,7 @@ object EloquencePrefs {
     const val DEFAULT_RATE = 100
     const val DEFAULT_PITCH = 100
     const val DEFAULT_VOLUME = 90
-    const val DEFAULT_SAMPLE_RATE = 22050
+    const val DEFAULT_SAMPLE_RATE = 11025
     const val DEFAULT_VOICE = 0
     const val DEFAULT_LANGUAGE = 0
 

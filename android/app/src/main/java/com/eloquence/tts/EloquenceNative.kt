@@ -39,8 +39,13 @@ object EloquenceNative {
      */
     external fun nativeProbe(dataDir: String, libDir: String, dialect: Int): String
 
-    /** Synthesize one utterance -> 11025 Hz mono S16 PCM, or null on abort. */
-    external fun nativeSynthesize(handle: Long, text: String): ShortArray?
+    /**
+     * Synthesize one utterance. Text arrives as bytes in the dialect's own
+     * charset (windows-1252 for Latin scripts, GB18030/Big5/Shift_JIS/EUC-KR
+     * for CJK) — the engine is an IBM-charset engine, not UTF-8.
+     * @return 11025 Hz mono S16 PCM, or null on abort/failure.
+     */
+    external fun nativeSynthesize(handle: Long, text: ByteArray): ShortArray?
 
     /** Abort the in-flight utterance (called from onStop). */
     external fun nativeStop(handle: Long)

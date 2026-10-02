@@ -300,14 +300,23 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
                     msg = "engine init FAILED (handle=0)"
                 } else {
                     EloquenceNative.nativeSetVoicePreset(h, prefs.voice)
+                    val pitchIn = (prefs.pitch / 2).coerceIn(0, 100)
+                    val pitch = if (pitchIn <= 50) pitchIn * 69 / 50
+                        else (pitchIn - 50) * 31 / 50 + 69
                     EloquenceNative.nativeSetProsody(
                         h,
                         (prefs.rate * 50 / 100).coerceIn(0, 250),
-                        (69 * prefs.pitch / 100).coerceIn(0, 100),
+                        pitch,
                         prefs.volume,
                     )
-                    val pcm = EloquenceNative.nativeSynthesize(
-                        h, getString(R.string.settings_sample))
+                    val bytes = try {
+                        getString(R.string.settings_sample)
+                            .toByteArray(charset("windows-1252"))
+                    } catch (e: Exception) {
+                        getString(R.string.settings_sample)
+                            .toByteArray(Charsets.US_ASCII)
+                    }
+                    val pcm = EloquenceNative.nativeSynthesize(h, bytes)
                     if (pcm == null) {
                         msg = "synth FAILED (null)"
                     } else {

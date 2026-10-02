@@ -188,8 +188,11 @@ class EloquenceTtsService : TextToSpeechService() {
                 val combinedRate = request.speechRate * prefs.rate / 100
                 val combinedPitch = request.pitch * prefs.pitch / 100
                 val rate = (combinedRate * 50 / 100).coerceIn(0, 250)
-                val base = EloquencePrefs.VOICE_PITCH_BASE[slot]
-                val pitch = (base * combinedPitch / 100).coerceIn(0, 100)
+                // GuangRong pitch curve: <=50 -> p*69/50, above -> +31/50 slope.
+                // Combined 100% lands on 50 -> 69, the preset-neutral point.
+                val pitchIn = (combinedPitch / 2).coerceIn(0, 100)
+                val pitch = if (pitchIn <= 50) pitchIn * 69 / 50
+                    else (pitchIn - 50) * 31 / 50 + 69
                 var volume = prefs.volume
                 try {
                     request.params?.let { b ->
@@ -204,7 +207,7 @@ class EloquenceTtsService : TextToSpeechService() {
                 EloquenceNative.nativeSetProsody(
                     handle, rate, pitch, volume.coerceIn(0, 100))
 
-                val pcm = EloquenceNative.nativeSynthesize(handle, text)
+                val pcm = EloquenceNative.nativeSynthesize(handle, encodeForDialect(text, v.dialect))
                 if (pcm == null) { callback.error(); return }
                 deliver(pcm, prefs.sampleRate, callback)
             } catch (e: Exception) {
@@ -263,6 +266,23 @@ class EloquenceTtsService : TextToSpeechService() {
         return out
     }
 
+    /** Encode text in the dialect's own charset (the engine is not UTF-8). */
+    private fun encodeForDialect(text: String, dialect: Int): ByteArray {
+        val name = when (dialect) {
+            0x00060000 -> "GB18030"   // Simplified Chinese
+            0x00060001 -> "Big5"      // Traditional Chinese
+            0x00080000 -> "Shift_JIS" // Japanese
+            0x000A0000 -> "EUC-KR"    // Korean
+            else -> "windows-1252"    // Latin scripts
+        }
+        return try {
+            text.toByteArray(charset(name))
+        } catch (e: Exception) {
+            Log.w(TAG, "charset $name unavailable, ASCII fallback", e)
+            text.toByteArray(Charsets.US_ASCII)
+        }
+    }
+
     // --- engine lifecycle --------------------------------------------------
 
     private fun ensureEngine(dialect: Int): Boolean {
@@ -305,6 +325,17 @@ class EloquenceTtsService : TextToSpeechService() {
             v.romanizer?.let { sb.append("Path_Rom=$libDir/lib$it.so\n") }
             sb.append("Version=6.1\n\n")
         }
+        // Standard voice table — the language libs' register_voices needs
+        // this section to initialise the voice table (working-device recipe).
+        sb.append("Voice1=0 50 65 30 0 0 50 92\n")    // Reed
+        sb.append("Voice2=0 50 81 50 0 0 50 95\n")    // Shelley
+        sb.append("Voice3=0 50 93 50 0 0 22 95\n")    // Sandy
+        sb.append("Voice4=0 50 56 0 0 0 86 93\n")     // Rocko
+        sb.append("Voice5=0 50 65 30 0 0 50 92\n")    // spare
+        sb.append("Voice6=0 50 89 40 0 0 56 95\n")    // Flo
+        sb.append("Voice7=0 50 68 40 3 0 45 90\n")    // Grandma
+        sb.append("Voice8=0 50 61 20 18 0 30 90\n")   // Grandpa
+        sb.append("Voice9=0 50 69 0 0 0 50 92\n")     // Eddy
         File(filesDir, "eci.ini").writeText(sb.toString())
     }
 }

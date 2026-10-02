@@ -62,6 +62,8 @@ typedef int     (*fn_Speaking)(ECIHand);
 typedef int     (*fn_Stop)(ECIHand);
 typedef void    (*fn_RegisterCallback)(ECIHand, ECICallback, void *);
 typedef int     (*fn_SetOutputBuffer)(ECIHand, int, short *);
+typedef void    (*fn_RegisterKlattHooks2)(ECIHand, void *, void *, void *);
+typedef int     (*fn_ClearInput)(ECIHand);
 
 /* One engine instance per native handle. */
 #define CHUNK_SAMPLES 8192
@@ -77,6 +79,8 @@ typedef struct {
     fn_Speaking       Speaking;
     fn_Stop           Stop;
     fn_SetOutputBuffer SetOutputBuffer;
+    fn_RegisterKlattHooks2 RegisterKlattHooks2; /* optional; CJK needs it */
+    fn_ClearInput     ClearInput;               /* optional; reset before AddText */
     short  chunk[CHUNK_SAMPLES];
     short *pcm;                /* accumulation buffer for the active utterance */
     long   pcm_len;
@@ -121,8 +125,16 @@ Java_com_eloquence_tts_EloquenceNative_nativeInit(JNIEnv *env, jclass clazz,
     const char *dataDir = (*env)->GetStringUTFChars(env, jDataDir, NULL);
     const char *libDir  = (*env)->GetStringUTFChars(env, jLibDir, NULL);
 
-    /* The engine resolves eci.ini relative to cwd. */
+    /* The engine finds eci.ini two ways: relative to cwd, and via the ECIINI
+     * environment variable. Set both — ECIINI is the robust one on Android
+     * (a working-device recipe), chdir covers engines that only use cwd. */
     if (chdir(dataDir) != 0) LOGE("chdir(%s) failed", dataDir);
+    {
+        char iniPath[1152];
+        snprintf(iniPath, sizeof iniPath, "%s/eci.ini", dataDir);
+        setenv("ECIINI", iniPath, 1);
+        LOGI("ECIINI=%s", iniPath);
+    }
 
     /* eci.so lives in the read-only native lib dir, not in filesDir. Try the
      * absolute libDir path first, then fall back to the linker search path
@@ -161,6 +173,12 @@ Java_com_eloquence_tts_EloquenceNative_nativeInit(JNIEnv *env, jclass clazz,
     e->Speaking        = (fn_Speaking)sym(lib, "eciSpeaking");
     e->Stop            = (fn_Stop)sym(lib, "eciStop");
     e->SetOutputBuffer = (fn_SetOutputBuffer)sym(lib, "eciSetOutputBuffer");
+    /* Optional but load-bearing on real devices (working-device recipe):
+     * Klatt hooks keep CJK synthesis from crashing, ClearInput resets the
+     * queue before each utterance. */
+    e->RegisterKlattHooks2 = (fn_RegisterKlattHooks2)dlsym(lib, "eciRegisterKlattHooks2");
+    e->ClearInput          = (fn_ClearInput)dlsym(lib, "eciClearInput");
+    if (!e->RegisterKlattHooks2) LOGE("WARN: eciRegisterKlattHooks2 missing (CJK may crash)");
 
     if (!RegisterCallback || !e->AddText || !e->Synthesize || !e->SetOutputBuffer) {
         LOGE("required ECI symbols missing");
@@ -178,6 +196,8 @@ Java_com_eloquence_tts_EloquenceNative_nativeInit(JNIEnv *env, jclass clazz,
     if (!e->eci) e->eci = New ? New() : NULL;
     if (!e->eci) { LOGE("eciNew/eciNewEx failed (check eci.ini + ProgStatus)"); free(e); return 0; }
 
+    /* Null Klatt hooks first (working-device recipe; CJK needs them). */
+    if (e->RegisterKlattHooks2) e->RegisterKlattHooks2(e->eci, NULL, NULL, NULL);
     RegisterCallback(e->eci, pcm_cb, e);               /* before SetOutputBuffer */
     e->SetOutputBuffer(e->eci, CHUNK_SAMPLES, e->chunk);
     if (e->SetParam) e->SetParam(e->eci, eciSampleRate, 1);  /* 11025 Hz (Apple) */
@@ -248,6 +268,12 @@ Java_com_eloquence_tts_EloquenceNative_nativeProbe(JNIEnv *env, jclass clazz,
     const char *libDir  = (*env)->GetStringUTFChars(env, jLibDir, NULL);
 
     P("chdir %s: %s\n", dataDir, chdir(dataDir) == 0 ? "ok" : "FAILED");
+    {
+        char iniPath[1152];
+        snprintf(iniPath, sizeof iniPath, "%s/eci.ini", dataDir);
+        setenv("ECIINI", iniPath, 1);
+        P("ECIINI=%s\n", iniPath);
+    }
 
     char p0[1024], p1[1024];
     snprintf(p0, sizeof p0, "%s/libeci.so", libDir);
@@ -272,9 +298,8 @@ Java_com_eloquence_tts_EloquenceNative_nativeProbe(JNIEnv *env, jclass clazz,
 
     fn_New New = (fn_New)dlsym(lib, "eciNew");
     fn_NewEx NewEx = (fn_NewEx)dlsym(lib, "eciNewEx");
-    fn_Delete Del = (fn_Delete)dlsym(lib, "eciDelete");
-    P("symbols: eciNew=%s eciNewEx=%s eciDelete=%s\n",
-      New ? "ok" : "MISSING", NewEx ? "ok" : "MISSING", Del ? "ok" : "MISSING");
+    P("symbols: eciNew=%s eciNewEx=%s\n",
+      New ? "ok" : "MISSING", NewEx ? "ok" : "MISSING");
     fn_Version Version = (fn_Version)dlsym(lib, "eciVersion");
     if (Version) { char ver[64] = {0}; Version(ver); P("eciVersion: %s\n", ver); }
     else P("eciVersion: MISSING\n");
@@ -290,7 +315,11 @@ Java_com_eloquence_tts_EloquenceNative_nativeProbe(JNIEnv *env, jclass clazz,
         h = New();
         P("eciNew(): %s\n", h ? "ok" : "NULL");
     }
-    if (h && Del) { Del(h); P("eciDelete: ok\n"); }
+    P("klattHooks=%s clearInput=%s\n",
+      dlsym(lib, "eciRegisterKlattHooks2") ? "present" : "MISSING",
+      dlsym(lib, "eciClearInput") ? "present" : "MISSING");
+    /* NOTE: deliberately NOT calling eciDelete here — on this build it can
+     * join an already-destroyed worker thread and SIGABRT the process. */
     P("RESULT: %s\n", h ? "ENGINE USABLE" : "ENGINE FAILED");
     return (*env)->NewStringUTF(env, out);
 #undef P
@@ -310,23 +339,33 @@ Java_com_eloquence_tts_EloquenceNative_nativeEngineVersion(JNIEnv *env, jclass c
     return (*env)->NewStringUTF(env, ver);
 }
 
-/* Synthesize one utterance synchronously; return PCM as a short[] (11025 Hz,
- * mono, S16). Returns null on failure/abort. */JNIEXPORT jshortArray JNICALL
+/* Synthesize one utterance synchronously; text arrives as bytes in the
+ * dialect's own charset (windows-1252 for Latin scripts, GB18030/Big5/
+ * Shift_JIS/EUC-KR for CJK — the engine is an IBM-charset engine, not
+ * UTF-8). Returns 11025 Hz mono S16 PCM, or null on failure/abort. */
+JNIEXPORT jshortArray JNICALL
 Java_com_eloquence_tts_EloquenceNative_nativeSynthesize(JNIEnv *env, jclass c,
-        jlong handle, jstring jText) {
+        jlong handle, jbyteArray jText) {
     (void)c;
     Engine *e = (Engine *)(intptr_t)handle;
     if (!e) return NULL;
-    const char *text = (*env)->GetStringUTFChars(env, jText, NULL);
+    jsize len = (*env)->GetArrayLength(env, jText);
+    if (len <= 0 || len > 100000) return NULL;
+    char *text = (char *)malloc((size_t)len + 1);
+    if (!text) return NULL;
+    (*env)->GetByteArrayRegion(env, jText, 0, len, (jbyte *)text);
+    text[len] = '\0';
 
     e->pcm_len = 0;
     e->abort = 0;
-    e->AddText(e->eci, (ECIInputText)text);
+    if (e->ClearInput) e->ClearInput(e->eci);
+    int r = e->AddText(e->eci, (ECIInputText)text);
+    free(text);
+    if (r <= 0) { LOGE("eciAddText refused text (r=%d)", r); return NULL; }
     e->Synthesize(e->eci);
     if (e->Synchronize) e->Synchronize(e->eci);
     /* Apple's Synchronize is non-blocking; drain the worker thread. */
     if (e->Speaking) { int guard = 0; while (e->Speaking(e->eci) && !e->abort && guard++ < 100000) usleep(1000); }
-    (*env)->ReleaseStringUTFChars(env, jText, text);
 
     if (e->abort || e->pcm_len == 0) return NULL;
     jshortArray out = (*env)->NewShortArray(env, (jsize)e->pcm_len);
@@ -339,8 +378,10 @@ Java_com_eloquence_tts_EloquenceNative_nativeStop(JNIEnv *env, jclass c, jlong h
     (void)env; (void)c;
     Engine *e = (Engine *)(intptr_t)handle;
     if (!e) return;
+    /* Abort flag only. Deliberately NOT calling eciStop(): on this build it
+     * terminates an already-destroyed worker thread and SIGABRTs the process.
+     * The drain loop in nativeSynthesize observes the flag and returns. */
     e->abort = 1;
-    if (e->Stop) e->Stop(e->eci);
 }
 
 JNIEXPORT void JNICALL
@@ -348,11 +389,9 @@ Java_com_eloquence_tts_EloquenceNative_nativeShutdown(JNIEnv *env, jclass c, jlo
     (void)env; (void)c;
     Engine *e = (Engine *)(intptr_t)handle;
     if (!e) return;
-    if (e->Delete) e->Delete(e->eci);
+    /* Deliberately NOT calling eciDelete() or dlclose(): both can join
+     * already-destroyed engine threads (SIGABRT) or run C++ atexit
+     * destructors in the wrong order. Leak the handle; the process owns it. */
     free(e->pcm);
-    /* Intentionally NOT dlclose(e->lib): the engine registers C++ atexit
-     * destructors referencing engine state; process exit runs them cleanly,
-     * an explicit dlclose can fire them in the wrong order. (Same rationale as
-     * examples/speak.c.) */
     free(e);
 }

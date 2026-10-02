@@ -225,9 +225,22 @@ Java_com_eloquence_tts_EloquenceNative_nativeSetVoicePreset(JNIEnv *env, jclass 
     LOGI("voice preset %d applied", slot);
 }
 
+/* Return the engine version string for an open handle (diagnostics). */
+JNIEXPORT jstring JNICALL
+Java_com_eloquence_tts_EloquenceNative_nativeEngineVersion(JNIEnv *env, jclass c,
+        jlong handle) {
+    (void)c;
+    Engine *e = (Engine *)(intptr_t)handle;
+    if (!e) return NULL;
+    fn_Version Version = (fn_Version)dlsym(e->lib, "eciVersion");
+    if (!Version) return NULL;
+    char ver[64] = {0};
+    Version(ver);
+    return (*env)->NewStringUTF(env, ver);
+}
+
 /* Synthesize one utterance synchronously; return PCM as a short[] (11025 Hz,
- * mono, S16). Returns null on failure/abort. */
-JNIEXPORT jshortArray JNICALL
+ * mono, S16). Returns null on failure/abort. */JNIEXPORT jshortArray JNICALL
 Java_com_eloquence_tts_EloquenceNative_nativeSynthesize(JNIEnv *env, jclass c,
         jlong handle, jstring jText) {
     (void)c;

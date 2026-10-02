@@ -13,6 +13,9 @@ package com.eloquence.tts
 
 import android.app.Activity
 import android.content.Intent
+import android.media.AudioFormat
+import android.media.AudioManager
+import android.media.AudioTrack
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.widget.ArrayAdapter
@@ -23,6 +26,7 @@ import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import java.io.File
 import java.util.Locale
 
 class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
@@ -38,6 +42,8 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
     private lateinit var volumeBar: SeekBar
     private lateinit var rateSpinner: Spinner
     private lateinit var voiceSpinner: Spinner
+    private lateinit var languageSpinner: Spinner
+    private lateinit var diagText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,6 +98,30 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
         }
         root.addView(voiceSpinner)
 
+        root.addView(header(getString(R.string.settings_language)))
+        root.addView(TextView(this).apply {
+            text = getString(R.string.settings_language_note)
+            textSize = 12f
+        })
+        languageSpinner = Spinner(this)
+        languageSpinner.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_item,
+            EloquencePrefs.LANGUAGES.toList()).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+        root.addView(languageSpinner)
+
+        root.addView(header(getString(R.string.settings_diag)))
+        diagText = TextView(this).apply {
+            textSize = 12f
+            setTextIsSelectable(true)
+        }
+        root.addView(diagText)
+        val checkButton = Button(this).apply { text = getString(R.string.settings_check) }
+        root.addView(checkButton)
+        val directButton = Button(this).apply { text = getString(R.string.settings_play_direct) }
+        root.addView(directButton)
+
         val testButton = Button(this).apply { text = getString(R.string.settings_test) }
         root.addView(spacer())
         root.addView(testButton)
@@ -105,6 +135,8 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
         rateSpinner.setSelection(
             EloquencePrefs.SAMPLE_RATES.indexOf(prefs.sampleRate).coerceAtLeast(0))
         voiceSpinner.setSelection(prefs.voice)
+        languageSpinner.setSelection(prefs.language)
+        diagText.text = getString(R.string.settings_diag_hint)
         refreshLabels()
 
         rateBar.setOnSeekBarChangeListener(saver {
@@ -122,6 +154,12 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
         voiceSpinner.onItemSelectedListener = selectedSaver {
             persist(voice = voiceSpinner.selectedItemPosition)
         }
+        languageSpinner.onItemSelectedListener = selectedSaver {
+            persist(language = languageSpinner.selectedItemPosition)
+        }
+
+        checkButton.setOnClickListener { checkEngine() }
+        directButton.setOnClickListener { playDirect() }
 
         testButton.setOnClickListener { speakSample() }
         sysButton.setOnClickListener {
@@ -185,7 +223,7 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
 
     private fun persist(
         rate: Int? = null, pitch: Int? = null, volume: Int? = null,
-        sampleRate: Int? = null, voice: Int? = null,
+        sampleRate: Int? = null, voice: Int? = null, language: Int? = null,
     ) {
         val cur = EloquencePrefs.load(this)
         EloquencePrefs.save(
@@ -196,8 +234,153 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
                 volume = volume ?: cur.volume,
                 sampleRate = sampleRate ?: cur.sampleRate,
                 voice = voice ?: cur.voice,
+                language = language ?: cur.language,
             )
         )
+    }
+
+    /** Probe the native engine and report each step (stays off the UI thread). */
+    private fun checkEngine() {
+        diagText.text = getString(R.string.settings_diag_running)
+        Thread {
+            val sb = StringBuilder()
+            try {
+                val libDir = applicationInfo.nativeLibraryDir
+                sb.append("libDir: $libDir\n")
+                val sos = try {
+                    File(libDir).listFiles()
+                        ?.map { it.name }?.filter { it.endsWith(".so") }?.sorted()
+                        ?: emptyList()
+                } catch (e: Exception) {
+                    sb.append("libDir list FAILED: ${e.message}\n")
+                    emptyList()
+                }
+                sb.append("so files: ${sos.size}\n")
+                for (n in arrayOf(
+                    "libeloquence_jni.so", "libeci.so", "libenu.so",
+                    "libc++_shared.so")) {
+                    sb.append("  $n: ${if (sos.contains(n)) "ok" else "MISSING"}\n")
+                }
+                val ini = File(filesDir, "eci.ini")
+                sb.append("eci.ini: ${if (ini.exists()) "${ini.length()} bytes" else "MISSING"}\n")
+                val prefs = EloquencePrefs.load(this)
+                val dialect = EloquencePrefs.LANGUAGE_DIALECTS[prefs.language]
+                var h = 0L
+                try {
+                    h = EloquenceNative.nativeInit(filesDir.absolutePath, libDir, dialect)
+                } catch (e: Throwable) {
+                    sb.append("init EXCEPTION ${e.javaClass.simpleName}: ${e.message}\n")
+                }
+                if (h == 0L) {
+                    sb.append("engine init: FAILED (handle=0)\n")
+                } else {
+                    try {
+                        val ver = try {
+                            EloquenceNative.nativeEngineVersion(h)
+                        } catch (_: Exception) {
+                            null
+                        }
+                        sb.append("engine init: ok, eciVersion=${ver ?: "?"}\n")
+                        val pcm = try {
+                            EloquenceNative.nativeSynthesize(h, "Hello.")
+                        } catch (_: Exception) {
+                            null
+                        }
+                        sb.append("synth test: ${
+                            if (pcm != null) "${pcm.size} samples" else "FAILED (null)"
+                        }\n")
+                    } finally {
+                        try {
+                            EloquenceNative.nativeShutdown(h)
+                        } catch (_: Exception) {
+                        }
+                    }
+                }
+            } catch (e: Throwable) {
+                sb.append("EXCEPTION ${e.javaClass.simpleName}: ${e.message}\n")
+            }
+            val out = sb.toString()
+            runOnUiThread { diagText.text = out }
+        }.start()
+    }
+
+    /**
+     * Synthesize straight from the engine and play it with AudioTrack,
+     * bypassing the system TTS framework. If you hear this but system TTS
+     * stays silent, the engine is fine and the problem is framework plumbing.
+     */
+    private fun playDirect() {
+        diagText.text = getString(R.string.settings_diag_running)
+        Thread {
+            var msg: String
+            var h = 0L
+            try {
+                val prefs = EloquencePrefs.load(this)
+                val dialect = EloquencePrefs.LANGUAGE_DIALECTS[prefs.language]
+                h = EloquenceNative.nativeInit(
+                    filesDir.absolutePath, applicationInfo.nativeLibraryDir, dialect)
+                if (h == 0L) {
+                    msg = "engine init FAILED (handle=0)"
+                } else {
+                    EloquenceNative.nativeSetVoicePreset(h, prefs.voice)
+                    EloquenceNative.nativeSetProsody(
+                        h,
+                        (prefs.rate * 50 / 100).coerceIn(0, 250),
+                        (69 * prefs.pitch / 100).coerceIn(0, 100),
+                        prefs.volume,
+                    )
+                    val pcm = EloquenceNative.nativeSynthesize(
+                        h, getString(R.string.settings_sample))
+                    if (pcm == null) {
+                        msg = "synth FAILED (null)"
+                    } else {
+                        msg = "playing ${pcm.size} samples…"
+                        runOnUiThread { diagText.text = msg }
+                        playPcm(pcm)
+                        msg = "played ${pcm.size} samples"
+                    }
+                }
+            } catch (e: Throwable) {
+                msg = "EXCEPTION ${e.javaClass.simpleName}: ${e.message}"
+            } finally {
+                if (h != 0L) {
+                    try {
+                        EloquenceNative.nativeShutdown(h)
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+            runOnUiThread { diagText.text = msg }
+        }.start()
+    }
+
+    private fun playPcm(pcm: ShortArray) {
+        val minBuf = AudioTrack.getMinBufferSize(
+            11025, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
+        @Suppress("DEPRECATION")
+        val track = AudioTrack(
+            AudioManager.STREAM_MUSIC, 11025, AudioFormat.CHANNEL_OUT_MONO,
+            AudioFormat.ENCODING_PCM_16BIT,
+            maxOf(minBuf, pcm.size * 2), AudioTrack.MODE_STATIC)
+        try {
+            track.write(pcm, 0, pcm.size)
+            track.play()
+            var guard = 0
+            while (track.playState == AudioTrack.PLAYSTATE_PLAYING && guard++ < 600) {
+                Thread.sleep(100)
+                try {
+                    if (track.playbackHeadPosition >= pcm.size) break
+                } catch (_: Exception) {
+                    break
+                }
+            }
+        } finally {
+            try {
+                track.stop()
+            } catch (_: Exception) {
+            }
+            track.release()
+        }
     }
 
     private fun refreshLabels() {

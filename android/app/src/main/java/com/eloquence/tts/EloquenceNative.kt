@@ -30,6 +30,9 @@ object EloquenceNative {
      */
     external fun nativeSetVoicePreset(handle: Long, slot: Int)
 
+    /** Engine version string for an open handle, or null (diagnostics). */
+    external fun nativeEngineVersion(handle: Long): String?
+
     /** Synthesize one utterance -> 11025 Hz mono S16 PCM, or null on abort. */
     external fun nativeSynthesize(handle: Long, text: String): ShortArray?
 

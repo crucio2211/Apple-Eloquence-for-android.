@@ -107,6 +107,16 @@ class EloquenceTtsService : TextToSpeechService() {
         return VOICES.firstOrNull { it.iso3Lang == lang } // language-only fallback
     }
 
+    /** Voice used when the system asks for something we don't ship. */
+    private fun preferredVoice(): VoiceInfo {
+        val idx = try {
+            EloquencePrefs.load(this).language
+        } catch (e: Exception) {
+            EloquencePrefs.DEFAULT_LANGUAGE
+        }.coerceIn(0, VOICES.size - 1)
+        return VOICES[idx]
+    }
+
     override fun onIsLanguageAvailable(lang: String?, country: String?, variant: String?): Int {
         val v = match(lang, country) ?: return TextToSpeech.LANG_NOT_SUPPORTED
         return when {
@@ -121,9 +131,11 @@ class EloquenceTtsService : TextToSpeechService() {
     }
 
     override fun onLoadLanguage(lang: String?, country: String?, variant: String?): Int {
-        val v = match(lang, country) ?: return TextToSpeech.LANG_NOT_SUPPORTED
+        val v = match(lang, country) ?: preferredVoice().also {
+            Log.w(TAG, "unsupported request $lang-$country, falling back to ${it.module}")
+        }
         synchronized(lock) { ensureEngine(v.dialect) }
-        return onIsLanguageAvailable(lang, country, variant)
+        return TextToSpeech.LANG_AVAILABLE
     }
 
     override fun onGetVoices(): List<Voice> {
@@ -157,8 +169,10 @@ class EloquenceTtsService : TextToSpeechService() {
     // --- synthesis ---------------------------------------------------------
 
     override fun onSynthesizeText(request: SynthesisRequest, callback: SynthesisCallback) {
-        val v = match(request.language, request.country)
-        if (v == null) { callback.error(); return }
+        val v = match(request.language, request.country) ?: preferredVoice().also {
+            Log.w(TAG, "synthesize for unsupported ${request.language}-${request.country}, " +
+                "falling back to ${it.module}")
+        }
 
         val text = request.charSequenceText?.toString().orEmpty()
         if (text.isEmpty()) { callback.error(); return }

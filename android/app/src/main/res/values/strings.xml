@@ -9,4 +9,11 @@
     <string name="settings_engine_fail">Engine not ready yet. Try again in a moment.</string>
     <string name="settings_sample">Hello from Eloquence.</string>
     <string name="settings_rate_note">The engine renders at 11025 Hz natively; higher choices are upsampled.</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_note">Used when the system asks for a language the engine does not ship.</string>
+    <string name="settings_diag">Diagnostics</string>
+    <string name="settings_diag_hint">If there is no speech, run “Check engine” and send the result to the developer.</string>
+    <string name="settings_diag_running">Working…</string>
+    <string name="settings_check">Check engine</string>
+    <string name="settings_play_direct">Play direct engine test</string>
 </resources>

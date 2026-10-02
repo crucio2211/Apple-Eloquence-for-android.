@@ -126,8 +126,8 @@ class EloquenceTtsService : TextToSpeechService() {
         return onIsLanguageAvailable(lang, country, variant)
     }
 
-    override fun onGetVoices(): MutableSet<Voice> {
-        val out = mutableSetOf<Voice>()
+    override fun onGetVoices(): List<Voice> {
+        val out = mutableListOf<Voice>()
         for (v in VOICES) {
             try {
                 out.add(

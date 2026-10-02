@@ -1,8 +1,12 @@
 # Android APK build for apple-eloquence-elf (fork-friendly)
 #
 # Builds the experimental Android TTS engine APK on GitHub Actions:
-#   1. convert vendor/tvOS-18.2/*.dylib -> android jniLibs (via stage-libs.sh + NDK r27c)
+#   1. fetch the PROVEN engine .so files (converted Apple tvOS libs that
+#      speak on real devices) into android jniLibs
 #   2. build APK with Gradle (no wrapper in repo, so we install Gradle 8.9)
+# NOTE: fresh macho2elf conversion output was tested and stays SILENT on
+# real devices (same app + same bridge speaks with these blobs), so the
+# pipeline pins the known-good blobs until the converter gap is understood.
 #
 # Trigger:
 #   - manual workflow_dispatch (gamitin mo ito sa fork mo)
@@ -56,28 +60,26 @@ jobs:
       - name: Install build deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y llvm python3-venv python3-pip unzip wget ninja-build
-          if ! command -v llvm-lipo >/dev/null; then
-            LIPO=$(ls /usr/bin/llvm-lipo-* 2>/dev/null | sort -V | tail -1)
-            if [ -z "$LIPO" ]; then
-              echo "no llvm-lipo found" >&2
-              exit 1
-            fi
-            sudo ln -sf "$LIPO" /usr/local/bin/llvm-lipo
-          fi
-          llvm-lipo --version | head -2
-          python3 -m venv venv
-          ./venv/bin/pip install --upgrade pip
-          ./venv/bin/pip install lief
+          sudo apt-get install -y unzip wget ninja-build curl
 
-      - name: Convert + stage engine libs
+      - name: Fetch proven engine libs
+        # Known-good converted Apple tvOS libs (verified speaking on real
+        # devices). Fresh converter output stays silent on-device, so pin
+        # these until that gap is understood. The JNI bridge itself
+        # (libeloquence_jni.so) is still built from source by Gradle below.
         run: |
-          export ANDROID_NDK="$ANDROID_HOME/ndk/27.2.12479018"
-          export PATH="$PWD/venv/bin:$PATH"
-          "$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang" --version
-          ./android/stage-libs.sh 24
+          OUT=android/app/src/main/jniLibs/arm64-v8a
+          mkdir -p "$OUT"
+          BASE=https://raw.githubusercontent.com/GGbond2007/eloquence-tts-android/main/native-libs/arm64-v8a
+          for n in eci enu eng esp esm fra frc deu ita ptb fin chs cht jpn kor \
+                   chsrom chtrom jpnrom korrom; do
+            curl -fsSL -o "$OUT/lib${n}.so" "$BASE/lib${n}.so"
+            echo "fetched lib${n}.so"
+          done
+          curl -fsSL -o "$OUT/libc++_shared.so" "$BASE/libc++_shared.so"
+          echo "fetched libc++_shared.so"
           echo "--- staged jniLibs ---"
-          ls -lh android/app/src/main/jniLibs/arm64-v8a/
+          ls -lh "$OUT/"
 
       - name: Install Gradle 8.9
         run: |

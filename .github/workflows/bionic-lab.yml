@@ -195,7 +195,7 @@ jobs:
               print('INTERP: NONE (static binary!)')
           PY
           echo "--- direct exec attempt (expect linker error if dynamic) ---"
-          ./harness 2>&1; echo "EXIT=$?"
+          ./harness 2>&1 || true; echo "EXIT=$?"
           echo "--- linker --list harness ---"
           LD_LIBRARY_PATH="$PWD/sys:$PWD/libs" ./sys/linker64 --list ./harness; echo "EXIT=$?"
 

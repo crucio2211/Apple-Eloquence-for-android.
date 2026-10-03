@@ -37,8 +37,22 @@ class ProbeService : Service() {
                 out.appendText("libDir: $libDir\n")
                 appendSoList(out, libDir)
                 out.appendText("soxr self-test: ${safeSoxrTest()}\n")
-                out.appendText(nativeProbeReport(
-                    filesDir.absolutePath, libDir, dialect, module, romanizer))
+                // Three isolated native steps: a native crash kills this
+                // process, and the file ends right before the deadly step.
+                out.appendText("--- step1 load ---\n")
+                out.appendText(safeStep {
+                    EloquenceNative.nativeProbeLoad(
+                        filesDir.absolutePath, libDir)
+                })
+                out.appendText("--- step2 init ---\n")
+                out.appendText(safeStep {
+                    EloquenceNative.nativeProbeInit(
+                        filesDir.absolutePath, libDir, dialect)
+                })
+                out.appendText("--- step3 lang ---\n")
+                out.appendText(safeStep {
+                    EloquenceNative.nativeProbeLang(libDir, module, romanizer)
+                })
                 out.appendText("RESULT: probe process survived\n")
             } catch (e: Throwable) {
                 try {
@@ -81,18 +95,13 @@ class ProbeService : Service() {
         }
     }
 
-    private fun nativeProbeReport(
-        dataDir: String, libDir: String, dialect: Int,
-        module: String?, romanizer: String?,
-    ): String {
-        // Step-by-step with markers: if the process dies inside nativeProbe,
-        // the file ends right before the missing marker.
+    private fun safeStep(block: () -> String): String {
+        // Catches Java linkage errors; a NATIVE crash bypasses this and the
+        // result file simply ends before the next marker.
         return try {
-            "--- probe ---\n" + EloquenceNative.nativeProbe(
-                dataDir, libDir, dialect, module, romanizer) +
-                "--- probe returned ---\n"
+            block()
         } catch (e: Throwable) {
-            "probe EXCEPTION ${e.javaClass.simpleName}: ${e.message}\n"
+            "STEP EXCEPTION ${e.javaClass.simpleName}: ${e.message}\n"
         }
     }
 

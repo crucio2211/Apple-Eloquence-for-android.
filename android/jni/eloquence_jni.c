@@ -378,6 +378,164 @@ done:
 #undef P
 }
 
+/* Probe step 1 (safe): environment + libeci load. Reports chdir, ECIINI,
+ * the eci.ini content, every dlopen attempt with the loader's error text,
+ * key symbols and eciVersion. Always returns a report string. */
+JNIEXPORT jstring JNICALL
+Java_com_eloquence_tts_EloquenceNative_nativeProbeLoad(JNIEnv *env, jclass clazz,
+                                                        jstring jDataDir, jstring jLibDir) {
+    (void)clazz;
+    char out[8192];
+    size_t n = 0;
+#define P(...) do { int w = snprintf(out + n, sizeof(out) - n, __VA_ARGS__); \
+                    if (w > 0) n += (size_t)w; } while (0)
+    const char *dataDir = (*env)->GetStringUTFChars(env, jDataDir, NULL);
+    const char *libDir  = (*env)->GetStringUTFChars(env, jLibDir, NULL);
+
+    P("chdir %s: %s\n", dataDir, chdir(dataDir) == 0 ? "ok" : "FAILED");
+    char iniPath[1152];
+    snprintf(iniPath, sizeof iniPath, "%s/eci.ini", dataDir);
+    setenv("ECIINI", iniPath, 1);
+    P("ECIINI=%s (getenv=%s)\n", iniPath, getenv("ECIINI") ? getenv("ECIINI") : "(null)");
+    {
+        FILE *f = fopen(iniPath, "r");
+        if (!f) {
+            P("eci.ini: MISSING (fopen failed)\n");
+        } else {
+            char ib[2048];
+            size_t nr = fread(ib, 1, sizeof(ib) - 1, f);
+            fclose(f);
+            ib[nr] = '\0';
+            P("eci.ini (%zu bytes):\n%s\n--- end ini ---\n", nr, ib);
+        }
+    }
+
+    char p0[1024], p1[1024];
+    snprintf(p0, sizeof p0, "%s/libeci.so", libDir);
+    snprintf(p1, sizeof p1, "%s/eci.so", libDir);
+    const char *cands[4] = { p0, p1, "libeci.so", "eci.so" };
+    void *lib = NULL;
+    for (int i = 0; i < 4 && !lib; i++) {
+        dlerror();
+        lib = dlopen(cands[i], RTLD_NOW | RTLD_GLOBAL);
+        if (lib) {
+            P("dlopen %s: ok\n", cands[i]);
+        } else {
+            const char *e = dlerror();
+            char eb[512];
+            snprintf(eb, sizeof eb, "%s", e ? e : "(no error text)");
+            P("dlopen %s: FAILED: %s\n", cands[i], eb);
+        }
+    }
+    (*env)->ReleaseStringUTFChars(env, jDataDir, dataDir);
+    (*env)->ReleaseStringUTFChars(env, jLibDir, libDir);
+    if (!lib) { P("RESULT: dlopen failed\n"); return (*env)->NewStringUTF(env, out); }
+
+    P("symbols: eciNew=%s eciNewEx=%s\n",
+      dlsym(lib, "eciNew") ? "ok" : "MISSING",
+      dlsym(lib, "eciNewEx") ? "ok" : "MISSING");
+    fn_Version Version = (fn_Version)dlsym(lib, "eciVersion");
+    if (Version) { char ver[64] = {0}; Version(ver); P("eciVersion: %s\n", ver); }
+    else P("eciVersion: MISSING\n");
+    P("klattHooks=%s clearInput=%s\n",
+      dlsym(lib, "eciRegisterKlattHooks2") ? "present" : "MISSING",
+      dlsym(lib, "eciClearInput") ? "present" : "MISSING");
+    P("STEP1 DONE\n");
+    return (*env)->NewStringUTF(env, out);
+#undef P
+}
+
+/* Probe step 2 (may crash natively on bad libs): engine instance creation. */
+JNIEXPORT jstring JNICALL
+Java_com_eloquence_tts_EloquenceNative_nativeProbeInit(JNIEnv *env, jclass clazz,
+        jstring jDataDir, jstring jLibDir, jint dialect) {
+    (void)clazz;
+    char out[2048];
+    size_t n = 0;
+#define P(...) do { int w = snprintf(out + n, sizeof(out) - n, __VA_ARGS__); \
+                    if (w > 0) n += (size_t)w; } while (0)
+    const char *dataDir = (*env)->GetStringUTFChars(env, jDataDir, NULL);
+    const char *libDir  = (*env)->GetStringUTFChars(env, jLibDir, NULL);
+    if (chdir(dataDir) != 0) P("chdir FAILED\n");
+    {
+        char iniPath[1152];
+        snprintf(iniPath, sizeof iniPath, "%s/eci.ini", dataDir);
+        setenv("ECIINI", iniPath, 1);
+    }
+    char p0[1024];
+    snprintf(p0, sizeof p0, "%s/libeci.so", libDir);
+    dlerror();
+    void *lib = dlopen(p0, RTLD_NOW | RTLD_GLOBAL);
+    if (!lib) lib = dlopen("libeci.so", RTLD_NOW | RTLD_GLOBAL);
+    (*env)->ReleaseStringUTFChars(env, jDataDir, dataDir);
+    (*env)->ReleaseStringUTFChars(env, jLibDir, libDir);
+    if (!lib) { P("dlopen: FAILED\n"); return (*env)->NewStringUTF(env, out); }
+    P("dlopen: ok\n");
+    fn_New New = (fn_New)dlsym(lib, "eciNew");
+    fn_NewEx NewEx = (fn_NewEx)dlsym(lib, "eciNewEx");
+    ECIHand h = NULL;
+    if (NewEx && dialect) {
+        h = NewEx(dialect);
+        P("eciNewEx(0x%x): %s\n", (unsigned)dialect, h ? "ok" : "NULL");
+    }
+    if (!h && New) {
+        h = New();
+        P("eciNew(): %s\n", h ? "ok" : "NULL");
+    }
+    /* Deliberately no eciDelete: it can join a destroyed worker thread. */
+    P("STEP2 DONE (handle %s)\n", h ? "open" : "null");
+    return (*env)->NewStringUTF(env, out);
+#undef P
+}
+
+/* Probe step 3 (may crash natively on bad libs): direct language-lib loads. */
+JNIEXPORT jstring JNICALL
+Java_com_eloquence_tts_EloquenceNative_nativeProbeLang(JNIEnv *env, jclass clazz,
+        jstring jLibDir, jstring jModule, jstring jRomanizer) {
+    (void)clazz;
+    char out[2048];
+    size_t n = 0;
+#define P(...) do { int w = snprintf(out + n, sizeof(out) - n, __VA_ARGS__); \
+                    if (w > 0) n += (size_t)w; } while (0)
+    const char *libDir = (*env)->GetStringUTFChars(env, jLibDir, NULL);
+    const char *module = jModule ? (*env)->GetStringUTFChars(env, jModule, NULL) : NULL;
+    const char *roman  = jRomanizer ? (*env)->GetStringUTFChars(env, jRomanizer, NULL) : NULL;
+    if (module && module[0]) {
+        char mp[1152];
+        snprintf(mp, sizeof mp, "%s/lib%s.so", libDir, module);
+        dlerror();
+        void *lm = dlopen(mp, RTLD_NOW | RTLD_GLOBAL);
+        if (lm) P("dlopen lib%s.so: ok\n", module);
+        else {
+            const char *e = dlerror();
+            char eb[512];
+            snprintf(eb, sizeof eb, "%s", e ? e : "(no error text)");
+            P("dlopen lib%s.so: FAILED: %s\n", module, eb);
+        }
+    } else {
+        P("lang lib: skipped (no module name)\n");
+    }
+    if (roman && roman[0]) {
+        char rp[1152];
+        snprintf(rp, sizeof rp, "%s/lib%s.so", libDir, roman);
+        dlerror();
+        void *rm = dlopen(rp, RTLD_NOW | RTLD_GLOBAL);
+        if (rm) P("dlopen lib%s.so: ok\n", roman);
+        else {
+            const char *e = dlerror();
+            char eb[512];
+            snprintf(eb, sizeof eb, "%s", e ? e : "(no error text)");
+            P("dlopen lib%s.so: FAILED: %s\n", roman, eb);
+        }
+    }
+    if (module) (*env)->ReleaseStringUTFChars(env, jModule, module);
+    if (roman) (*env)->ReleaseStringUTFChars(env, jRomanizer, roman);
+    (*env)->ReleaseStringUTFChars(env, jLibDir, libDir);
+    P("STEP3 DONE\n");
+    return (*env)->NewStringUTF(env, out);
+#undef P
+}
+
 /* Return the engine version string for an open handle (diagnostics). */
 JNIEXPORT jstring JNICALL
 Java_com_eloquence_tts_EloquenceNative_nativeEngineVersion(JNIEnv *env, jclass c,

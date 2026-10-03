@@ -53,13 +53,26 @@ object EloquenceNative {
     external fun nativeSoxrSelfTest(): String
 
     /**
-     * Step-by-step init probe: chdir, ECIINI, eci.ini dump, dlopen attempts
-     * (with loader error text), language-lib loads, symbols,
-     * eciNewEx/eciNew. Always returns a report string.
+     * Probe step 1 (safe): environment + libeci load. Reports chdir, ECIINI,
+     * eci.ini dump, every dlopen attempt with loader error text, key
+     * symbols, and eciVersion. Always returns a report string.
      */
-    external fun nativeProbe(
+    external fun nativeProbeLoad(dataDir: String, libDir: String): String
+
+    /**
+     * Probe step 2 (may crash natively on bad libs): engine instance
+     * creation via eciNewEx(dialect) with eciNew() fallback.
+     */
+    external fun nativeProbeInit(
         dataDir: String, libDir: String, dialect: Int,
-        module: String?, romanizer: String?,
+    ): String
+
+    /**
+     * Probe step 3 (may crash natively on bad libs): direct loads of the
+     * language (+romanizer) libs the engine dlopens internally.
+     */
+    external fun nativeProbeLang(
+        libDir: String, module: String?, romanizer: String?,
     ): String
 
     /**

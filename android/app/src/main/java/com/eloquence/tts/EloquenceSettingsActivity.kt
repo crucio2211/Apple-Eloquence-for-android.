@@ -13,6 +13,7 @@ package com.eloquence.tts
 
 import android.app.Activity
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
@@ -403,16 +404,41 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
         }.start()
     }
 
-    private fun playPcm(pcm: ShortArray, rateHz: Int = 11025) {
+    // Modern Builder API: the deprecated constructor this replaced is
+    // unreliable for static playback on current Android (it could leave
+    // the Test button completely silent with no error). Every failure
+    // below throws, and the caller reports it — nothing goes quiet.
+    private fun playPcm(pcm: ShortArray, rateHz: Int) {
+        if (pcm.isEmpty()) throw IllegalArgumentException("empty pcm")
+        val bytes = ByteArray(pcm.size * 2)
+        for (i in pcm.indices) {
+            bytes[i * 2] = (pcm[i].toInt() and 0xFF).toByte()
+            bytes[i * 2 + 1] = ((pcm[i].toInt() shr 8) and 0xFF).toByte()
+        }
         val minBuf = AudioTrack.getMinBufferSize(
             rateHz, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
-        @Suppress("DEPRECATION")
-        val track = AudioTrack(
-            AudioManager.STREAM_MUSIC, rateHz, AudioFormat.CHANNEL_OUT_MONO,
-            AudioFormat.ENCODING_PCM_16BIT,
-            maxOf(minBuf, pcm.size * 2), AudioTrack.MODE_STATIC)
+        if (minBuf <= 0) throw IllegalStateException("bad rate $rateHz (minBuf=$minBuf)")
+        val track = AudioTrack.Builder()
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build())
+            .setAudioFormat(
+                AudioFormat.Builder()
+                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                    .setSampleRate(rateHz)
+                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                    .build())
+            .setBufferSizeInBytes(maxOf(minBuf, bytes.size))
+            .setTransferMode(AudioTrack.MODE_STATIC)
+            .build()
         try {
-            track.write(pcm, 0, pcm.size)
+            if (track.state != AudioTrack.STATE_INITIALIZED) {
+                throw IllegalStateException("track state=${track.state}")
+            }
+            val written = track.write(bytes, 0, bytes.size)
+            if (written < 0) throw IllegalStateException("write=$written")
             track.play()
             var guard = 0
             while (track.playState == AudioTrack.PLAYSTATE_PLAYING && guard++ < 600) {

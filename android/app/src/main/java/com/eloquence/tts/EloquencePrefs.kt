@@ -47,7 +47,7 @@ object EloquencePrefs {
     const val DEFAULT_RATE = 100
     const val DEFAULT_PITCH = 100
     const val DEFAULT_VOLUME = 90
-    const val DEFAULT_SAMPLE_MODE = MODE_48000_SOXSR
+    const val DEFAULT_SAMPLE_MODE = MODE_11025_NATIVE
     const val DEFAULT_VOICE = 0
     const val DEFAULT_LANGUAGE = 0
 

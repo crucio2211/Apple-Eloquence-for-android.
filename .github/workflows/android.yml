@@ -67,7 +67,10 @@ jobs:
           llvm-lipo --version | head -2
           python3 -m venv venv
           ./venv/bin/pip install --upgrade pip
-          ./venv/bin/pip install lief
+          # Pin LIEF: the repo's tests run against 0.17.6 (chained-fixup
+          # parsing). Unpinned pip pulls 1.x, whose parser changes produce
+          # libs that link cleanly but crash on real devices.
+          ./venv/bin/pip install "lief==0.17.6"
 
       - name: Convert + stage engine libs
         run: |

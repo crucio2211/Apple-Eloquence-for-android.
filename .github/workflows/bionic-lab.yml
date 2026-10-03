@@ -99,7 +99,8 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq curl unzip android-sdk-libsparse-utils e2fsprogs gdisk
+          sudo apt-get install -y -qq curl unzip android-sdk-libsparse-utils e2fsprogs gdisk file
+          sudo apt-get install -y -qq erofs-utils fuse 2>&1 | tail -1 || echo "no erofs-utils"
 
       - name: Download inputs
         uses: actions/download-artifact@v4
@@ -130,18 +131,32 @@ jobs:
             fi
             echo "system partition starts at sector $START"
             dd if=system.raw of=part.ext4 bs=512 skip="$START" status=none
-            SYSIMG=part.ext4
+          SYSIMG=part.ext4
           else
             SYSIMG=system.raw
           fi
-          for f in "bin/linker64|linker64" "lib64/libc.so|libc.so" \
-                   "lib64/libm.so|libm.so" "lib64/libdl.so|libdl.so"; do
-            src="${f%%|*}"; dst="${f##*|}";
-            debugfs -R "dump $src sysroot/$dst" "$SYSIMG" 2>&1 || \
-            debugfs -R "dump system/$src sysroot/$dst" "$SYSIMG"
+          file "$SYSIMG" || true
+          echo "--- fs root ---"
+          debugfs -R "ls -l" "$SYSIMG" 2>&1 | head -30 || true
+          echo "--- lib dirs ---"
+          for d in lib64 lib system/lib64 system/lib; do
+            echo "== $d =="; debugfs -R "ls -l $d" "$SYSIMG" 2>&1 | head -12 || true
           done
-          chmod +x sysroot/linker64
+          # If ext4 has no Bionic libs (e.g. erofs image), try erofsfuse.
+          if ! debugfs -R "ls lib64/libc.so" "$SYSIMG" 2>&1 | grep -q .; then
+            echo "trying erofs..."
+          fi
+          for f in "bin/linker64|linker64" "lib64/libc.so|libc.so" \
+                   "lib64/libm.so|libm.so" "lib64/libdl.so|libdl.so" \
+                   "lib/libc.so|libc.so" "lib/libm.so|libm.so" "lib/libdl.so|libdl.so"; do
+            src="${f%%|*}"; dst="${f##*|}";
+            [ -f "sysroot/$dst" ] && continue
+            debugfs -R "dump $src sysroot/$dst" "$SYSIMG" 2>&1 || \
+            debugfs -R "dump system/$src sysroot/$dst" "$SYSIMG" 2>&1 || true
+          done
+          chmod +x sysroot/linker64 2>/dev/null || true
           ls -la sysroot/
+          test -f sysroot/linker64 -a -f sysroot/libc.so -a -f sysroot/libm.so -a -f sysroot/libdl.so
 
       - name: Stage test libs
         run: |

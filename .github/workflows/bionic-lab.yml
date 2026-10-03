@@ -148,14 +148,17 @@ jobs:
             [ -b "$dev" ] || continue
             echo "--- trying $dev ---"
             if sudo mount -o ro "$dev" mnt 2>/dev/null; then
-              if [ -f mnt/bin/linker64 ] && [ -f mnt/lib64/libc.so ]; then
-                echo "FOUND userland on $dev"
-                FOUND="$dev"
-                sudo cp mnt/bin/linker64 sysroot/
-                sudo cp mnt/lib64/libc.so mnt/lib64/libm.so mnt/lib64/libdl.so sysroot/
-                sudo umount mnt
-                break
-              fi
+              # Layout A (classic): bin/linker64 + lib64/*.so at fs root.
+              # Layout B (system-as-root): under system/ instead.
+              for root in mnt mnt/system; do
+                if [ -f "$root/bin/linker64" ] && [ -f "$root/lib64/libc.so" ]; then
+                  echo "FOUND userland on $dev ($root)"
+                  FOUND="$dev"
+                  sudo cp "$root/bin/linker64" sysroot/
+                  sudo cp "$root/lib64/libc.so" "$root/lib64/libm.so" "$root/lib64/libdl.so" sysroot/
+                  break 2
+                fi
+              done
               echo "not a system fs; contents:"
               ls mnt/ | head -20 || true
               sudo umount mnt

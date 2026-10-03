@@ -20,6 +20,7 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.SeekBar
@@ -40,7 +41,7 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
     private lateinit var rateBar: SeekBar
     private lateinit var pitchBar: SeekBar
     private lateinit var volumeBar: SeekBar
-    private lateinit var rateSpinner: Spinner
+    private lateinit var rateBox: CheckBox
     private lateinit var voiceSpinner: Spinner
     private lateinit var languageSpinner: Spinner
     private lateinit var diagText: TextView
@@ -92,13 +93,10 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
             text = getString(R.string.settings_rate_note)
             textSize = 12f
         })
-        rateSpinner = Spinner(this)
-        rateSpinner.adapter = ArrayAdapter(
-            this, android.R.layout.simple_spinner_item,
-            EloquencePrefs.SAMPLE_RATES.map { "$it Hz" }).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        rateBox = CheckBox(this).apply {
+            text = getString(R.string.settings_higher_rate, EloquencePrefs.HIGH_RATE_HZ)
         }
-        root.addView(rateSpinner)
+        root.addView(rateBox)
 
         root.addView(header("Voice"))
         voiceSpinner = Spinner(this)
@@ -143,8 +141,7 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
         rateBar.progress = prefs.rate - 50
         pitchBar.progress = prefs.pitch - 50
         volumeBar.progress = prefs.volume
-        rateSpinner.setSelection(
-            EloquencePrefs.SAMPLE_RATES.indexOf(prefs.sampleRate).coerceAtLeast(0))
+        rateBox.isChecked = prefs.higherRate
         voiceSpinner.setSelection(prefs.voice)
         languageSpinner.setSelection(prefs.language)
         diagText.text = getString(R.string.settings_diag_hint)
@@ -159,8 +156,8 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
         volumeBar.setOnSeekBarChangeListener(saver {
             persist(volume = volumeBar.progress); refreshLabels()
         })
-        rateSpinner.onItemSelectedListener = selectedSaver {
-            persist(sampleRate = EloquencePrefs.SAMPLE_RATES[rateSpinner.selectedItemPosition])
+        rateBox.setOnCheckedChangeListener { _, checked ->
+            persist(higherRate = checked)
         }
         voiceSpinner.onItemSelectedListener = selectedSaver {
             persist(voice = voiceSpinner.selectedItemPosition)
@@ -234,7 +231,7 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
 
     private fun persist(
         rate: Int? = null, pitch: Int? = null, volume: Int? = null,
-        sampleRate: Int? = null, voice: Int? = null, language: Int? = null,
+        higherRate: Boolean? = null, voice: Int? = null, language: Int? = null,
     ) {
         val cur = EloquencePrefs.load(this)
         EloquencePrefs.save(
@@ -243,7 +240,7 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
                 rate = rate ?: cur.rate,
                 pitch = pitch ?: cur.pitch,
                 volume = volume ?: cur.volume,
-                sampleRate = sampleRate ?: cur.sampleRate,
+                higherRate = higherRate ?: cur.higherRate,
                 voice = voice ?: cur.voice,
                 language = language ?: cur.language,
             )
@@ -331,28 +328,38 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
                         getString(R.string.settings_sample)
                             .toByteArray(Charsets.US_ASCII)
                     }
-                    // Engine-native rate via the ECI command (no resampling).
-                    val wantHz = prefs.sampleRate.let {
-                        if (it == 8000 || it == 16000) it else 11025
-                    }
-                    val wantParam = if (wantHz == 8000) 0 else if (wantHz == 16000) 2 else 1
-                    val actualHz = try {
-                        if (EloquenceNative.nativeSetSampleRate(h, wantParam) < 0) {
-                            EloquenceNative.nativeSetSampleRate(h, 1)
-                            11025
-                        } else wantHz
+                    // Engine renders 11025 Hz natively; optional libsoxr
+                    // upsample to 48000 Hz when the checkbox is on.
+                    try {
+                        EloquenceNative.nativeSetSampleRate(h, 1)
                     } catch (e: Exception) {
-                        11025
                     }
                     val pcm = EloquenceNative.nativeSynthesize(h, bytes)
                     if (pcm == null) {
                         msg = "synth FAILED (null)"
+                    } else if (prefs.higherRate) {
+                        val up = try {
+                            EloquenceNative.nativeResample(
+                                pcm, 11025, EloquencePrefs.HIGH_RATE_HZ)
+                        } catch (e: Exception) {
+                            null
+                        }
+                        if (up == null) {
+                            msg = "resample FAILED, playing native…"
+                            runOnUiThread { diagText.text = msg }
+                            playPcm(pcm, 11025)
+                            msg = "played ${pcm.size} samples @ 11025 Hz"
+                        } else {
+                            msg = "playing ${up.size} samples @ ${EloquencePrefs.HIGH_RATE_HZ} Hz…"
+                            runOnUiThread { diagText.text = msg }
+                            playPcm(up, EloquencePrefs.HIGH_RATE_HZ)
+                            msg = "played ${up.size} samples @ ${EloquencePrefs.HIGH_RATE_HZ} Hz"
+                        }
                     } else {
-                        msg = if (actualHz == wantHz) "playing ${pcm.size} samples @ $actualHz Hz…"
-                            else "16 kHz rejected, playing @ $actualHz Hz…"
+                        msg = "playing ${pcm.size} samples @ 11025 Hz…"
                         runOnUiThread { diagText.text = msg }
-                        playPcm(pcm, actualHz)
-                        msg = "played ${pcm.size} samples @ $actualHz Hz"
+                        playPcm(pcm, 11025)
+                        msg = "played ${pcm.size} samples @ 11025 Hz"
                     }
                 }
             } catch (e: Throwable) {

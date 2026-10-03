@@ -6,8 +6,8 @@
  *   rate: percent 50..200 (100 = normal, combined with the system TTS rate)
  *   pitch: percent 50..200 (100 = normal, scales the voice preset's baseline)
  *   volume: 0..100 (engine eciVolume scale)
- *   sampleRate: output Hz offered to the platform (engine renders 11025 Hz
- *     natively; higher choices are linearly upsampled in the service)
+ *   higherRate: when true, the 11025 Hz engine output is upsampled to
+ *     48000 Hz with libsoxr (very-high-quality); otherwise 11025 Hz native.
  *   voice: 0..7 Apple preset slot (Reed, Shelley, Sandy, Rocko, Flo,
  *     Grandma, Grandpa, Eddy)
  *   language: index into LANGUAGES (default voice when the system asks for
@@ -21,7 +21,7 @@ data class EloqSettings(
     val rate: Int,
     val pitch: Int,
     val volume: Int,
-    val sampleRate: Int,
+    val higherRate: Boolean,
     val voice: Int,
     val language: Int,
 )
@@ -31,14 +31,17 @@ object EloquencePrefs {
     const val KEY_RATE = "rate"
     const val KEY_PITCH = "pitch"
     const val KEY_VOLUME = "volume"
-    const val KEY_SAMPLE_RATE = "sample_rate"
+    const val KEY_HIGHER_RATE = "higher_rate"
     const val KEY_VOICE = "voice"
     const val KEY_LANGUAGE = "language"
+
+    /** libsoxr upsampling target for the checkbox. */
+    const val HIGH_RATE_HZ = 48000
 
     const val DEFAULT_RATE = 100
     const val DEFAULT_PITCH = 100
     const val DEFAULT_VOLUME = 90
-    const val DEFAULT_SAMPLE_RATE = 11025
+    const val DEFAULT_HIGHER_RATE = true
     const val DEFAULT_VOICE = 0
     const val DEFAULT_LANGUAGE = 0
 
@@ -83,9 +86,8 @@ object EloquencePrefs {
         "jpnrom", "korrom",
     )
 
-    /** Engine-native rates only (ECI eciSampleRate: 0=8k, 1=11025, 2=test).
-     * No software resampling. */
-    val SAMPLE_RATES = intArrayOf(8000, 11025, 16000)
+    /** Engine-native rates only (ECI eciSampleRate: 0=8k, 1=11025, 2=test). */
+    val ENGINE_RATES = intArrayOf(8000, 11025, 16000)
     val VOICE_NAMES = arrayOf(
         "Reed", "Shelley", "Sandy", "Rocko", "Flo", "Grandma", "Grandpa", "Eddy"
     )
@@ -98,8 +100,7 @@ object EloquencePrefs {
             rate = p.getInt(KEY_RATE, DEFAULT_RATE).coerceIn(50, 200),
             pitch = p.getInt(KEY_PITCH, DEFAULT_PITCH).coerceIn(50, 200),
             volume = p.getInt(KEY_VOLUME, DEFAULT_VOLUME).coerceIn(0, 100),
-            sampleRate = p.getInt(KEY_SAMPLE_RATE, DEFAULT_SAMPLE_RATE)
-                .let { if (SAMPLE_RATES.contains(it)) it else DEFAULT_SAMPLE_RATE },
+            higherRate = p.getBoolean(KEY_HIGHER_RATE, DEFAULT_HIGHER_RATE),
             voice = p.getInt(KEY_VOICE, DEFAULT_VOICE).coerceIn(0, 7),
             language = p.getInt(KEY_LANGUAGE, DEFAULT_LANGUAGE)
                 .coerceIn(0, LANGUAGES.size - 1),
@@ -111,8 +112,7 @@ object EloquencePrefs {
             .putInt(KEY_RATE, s.rate.coerceIn(50, 200))
             .putInt(KEY_PITCH, s.pitch.coerceIn(50, 200))
             .putInt(KEY_VOLUME, s.volume.coerceIn(0, 100))
-            .putInt(KEY_SAMPLE_RATE,
-                if (SAMPLE_RATES.contains(s.sampleRate)) s.sampleRate else DEFAULT_SAMPLE_RATE)
+            .putBoolean(KEY_HIGHER_RATE, s.higherRate)
             .putInt(KEY_VOICE, s.voice.coerceIn(0, 7))
             .putInt(KEY_LANGUAGE, s.language.coerceIn(0, LANGUAGES.size - 1))
             .apply()

@@ -30,6 +30,9 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <android/log.h>
+#ifdef HAVE_SOXSR
+#include <soxr.h>
+#endif
 
 #define LOG_TAG "EloquenceJNI"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,  LOG_TAG, __VA_ARGS__)
@@ -433,6 +436,48 @@ Java_com_eloquence_tts_EloquenceNative_nativeSynthesize(JNIEnv *env, jclass c,
     jshortArray out = (*env)->NewShortArray(env, (jsize)e->pcm_len);
     if (out) (*env)->SetShortArrayRegion(env, out, 0, (jsize)e->pcm_len, e->pcm);
     return out;
+}
+
+/* High-quality resampling via libsoxr (very-high-quality preset).
+ * Returns resampled S16 PCM, or null on any failure (caller falls back to
+ * native-rate output). Built only when HAVE_SOXSR is defined; otherwise this
+ * symbol still exists but always returns null. */
+JNIEXPORT jshortArray JNICALL
+Java_com_eloquence_tts_EloquenceNative_nativeResample(JNIEnv *env, jclass c,
+        jshortArray jPcm, jint fromRate, jint toRate) {
+    (void)c;
+#ifdef HAVE_SOXSR
+    if (!jPcm || fromRate <= 0 || toRate <= 0 || fromRate == toRate) return NULL;
+    jsize inLen = (*env)->GetArrayLength(env, jPcm);
+    if (inLen <= 0 || inLen > 10000000) return NULL;
+    short *in = (short *)malloc((size_t)inLen * sizeof(short));
+    if (!in) return NULL;
+    (*env)->GetShortArrayRegion(env, jPcm, 0, inLen, in);
+
+    size_t outCap = (size_t)((long long)inLen * toRate / fromRate) + 128;
+    short *out = (short *)malloc(outCap * sizeof(short));
+    if (!out) { free(in); return NULL; }
+
+    soxr_io_spec_t io = soxr_io_spec(SOXR_INT16_I, SOXR_INT16_I);
+    soxr_quality_spec_t q = soxr_quality_spec(SOXR_VHQ, 0);
+    size_t idone = 0, odone = 0;
+    soxr_error_t e = soxr_oneshot((double)fromRate, (double)toRate, 1,
+                                  in, (size_t)inLen, &idone,
+                                  out, outCap, &odone, &io, &q, NULL);
+    free(in);
+    if (e || odone == 0) {
+        LOGE("soxr_oneshot failed: %s", e ? e : "no output");
+        free(out);
+        return NULL;
+    }
+    jshortArray ret = (*env)->NewShortArray(env, (jsize)odone);
+    if (ret) (*env)->SetShortArrayRegion(env, ret, 0, (jsize)odone, out);
+    free(out);
+    return ret;
+#else
+    (void)env; (void)jPcm; (void)fromRate; (void)toRate;
+    return NULL;
+#endif
 }
 
 JNIEXPORT void JNICALL

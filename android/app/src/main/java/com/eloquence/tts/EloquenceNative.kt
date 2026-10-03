@@ -41,6 +41,12 @@ object EloquenceNative {
     external fun nativeSetSampleRate(handle: Long, param: Int): Int
 
     /**
+     * High-quality resample via libsoxr (very-high-quality preset).
+     * @return resampled PCM, or null on failure / unsupported build.
+     */
+    external fun nativeResample(pcm: ShortArray, fromRate: Int, toRate: Int): ShortArray?
+
+    /**
      * Step-by-step init probe: chdir, ECIINI, eci.ini dump, dlopen attempts
      * (with loader error text), language-lib loads, symbols,
      * eciNewEx/eciNew. Always returns a report string.

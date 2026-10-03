@@ -2,9 +2,8 @@
 # linker64 on an ARM runner — no device needed. Compares fresh Mudb0y
 # conversion output vs the proven blobs across old/new Bionic userlands.
 #
-#   job1 (x86):   convert eci+enu with the pinned pipeline + compile harness
-#   job2 (arm):   fetch Bionic userlands (API 28 + 35 system images)
-#   job3 (arm):   matrix api x libset -> dlopen/eciNewEx/synthesize report
+#   job1 (x86): convert eci+enu + compile harness + download ARM system images
+#   job2 (arm): matrix api x libset -> dlopen/eciNewEx/synthesize report
 name: Bionic-Lab
 
 on:
@@ -55,6 +54,18 @@ jobs:
           "$CLANG" tools/bionic-lab/harness.c -o lab-libs/harness -ldl
           ls -la lab-libs/
 
+      - name: Download ARM system images (API 28 + 35)
+        # The emulator package only exists for x86_64 hosts, so the
+        # image dependency resolves here (it cannot on ARM runners).
+        # The images themselves are arm64 userlands for the ARM test job.
+        run: |
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+            "system-images;android-28;google_apis;arm64-v8a" \
+            "system-images;android-35;google_apis;arm64-v8a"
+          ls -la /usr/local/lib/android/sdk/system-images/android-28/google_apis/arm64-v8a/
+          ls -la /usr/local/lib/android/sdk/system-images/android-35/google_apis/arm64-v8a/
+
       - name: Upload lab inputs
         uses: actions/upload-artifact@v4
         with:
@@ -62,61 +73,52 @@ jobs:
           path: lab-libs/
           retention-days: 3
 
-  fetch-sys:
+      - name: Upload sysimg-28
+        uses: actions/upload-artifact@v4
+        with:
+          name: sysimg-28
+          path: /usr/local/lib/android/sdk/system-images/android-28/google_apis/arm64-v8a/system.img
+          retention-days: 1
+
+      - name: Upload sysimg-35
+        uses: actions/upload-artifact@v4
+        with:
+          name: sysimg-35
+          path: /usr/local/lib/android/sdk/system-images/android-35/google_apis/arm64-v8a/system.img
+          retention-days: 1
+
+  test:
+    needs: [build-inputs]
     runs-on: ubuntu-24.04-arm
     strategy:
+      fail-fast: false
       matrix:
         api: [28, 35]
+        libset: [fresh, proven]
     steps:
       - name: Install tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq unzip curl python3 android-sdk-libsparse-utils e2fsprogs
+          sudo apt-get install -y -qq curl unzip android-sdk-libsparse-utils e2fsprogs
 
-      - name: Resolve + download system image
-        run: |
-          python3 - <<'PY'
-          import urllib.request, xml.etree.ElementTree as ET, os
-          api = "${{ matrix.api }}"
-          want = f"system-images;android-{api};google_apis;arm64-v8a"
-          print("fetching repository xml...", flush=True)
-          data = urllib.request.urlopen(
-              "https://dl.google.com/android/repository/repository2-1.xml").read()
-          print(f"xml bytes: {len(data)}", flush=True)
-          root = ET.fromstring(data)
-          found = False
-          for pkg in root.iter():
-              if not pkg.tag.endswith("remotePackage"):
-                  continue
-              if pkg.get("path") != want:
-                  continue
-              for arch in pkg.iter():
-                  if not arch.tag.endswith("archive"):
-                      continue
-                  url = size = None
-                  for c in arch.iter():
-                      if c.tag.endswith("url") and url is None:
-                          url = (c.text or "").strip()
-                      if c.tag.endswith("size") and size is None:
-                          size = (c.text or "").strip()
-                  if url:
-                      print(f"URL={url}", flush=True)
-                      print(f"SIZE={size}", flush=True)
-                      open(os.environ["GITHUB_ENV"], "a").write(f"SYSURL={url}\nSYSSIZE={size}\n")
-                      found = True
-          if not found:
-              print("no sys-img url found", flush=True)
-          PY
-          test -n "$SYSURL" || { echo "no sys-img url found"; exit 1; }
-          curl -fSL -o sysimg.zip "$SYSURL"
-          ls -la sysimg.zip
-          unzip -o sysimg.zip -d sysimg/
+      - name: Download inputs
+        uses: actions/download-artifact@v4
+        with:
+          name: lab-input
+          path: lab-input/
+
+      - name: Download system image
+        uses: actions/download-artifact@v4
+        with:
+          name: sysimg-${{ matrix.api }}
+          path: sysimg/
 
       - name: Extract linker + Bionic libs
         run: |
           mkdir -p sysroot
           IMG=$(find sysimg -name 'system.img' | head -1)
           echo "image: $IMG"
+          ls -la "$IMG"
           simg2img "$IMG" system.raw || cp "$IMG" system.raw
           for f in "bin/linker64|linker64" "lib64/libc.so|libc.so" \
                    "lib64/libm.so|libm.so" "lib64/libdl.so|libdl.so"; do
@@ -127,37 +129,10 @@ jobs:
           chmod +x sysroot/linker64
           ls -la sysroot/
 
-      - name: Upload sysroot
-        uses: actions/upload-artifact@v4
-        with:
-          name: sysroot-${{ matrix.api }}
-          path: sysroot/
-          retention-days: 3
-
-  test:
-    needs: [build-inputs, fetch-sys]
-    runs-on: ubuntu-24.04-arm
-    strategy:
-      fail-fast: false
-      matrix:
-        api: [28, 35]
-        libset: [fresh, proven]
-    steps:
-      - name: Download inputs
-        uses: actions/download-artifact@v4
-        with:
-          name: lab-input
-          path: lab-input/
-
-      - name: Download sysroot
-        uses: actions/download-artifact@v4
-        with:
-          name: sysroot-${{ matrix.api }}
-          path: case/sys/
-
       - name: Stage test libs
         run: |
-          mkdir -p case/libs
+          mkdir -p case/libs case/sys
+          cp sysroot/linker64 sysroot/libc.so sysroot/libm.so sysroot/libdl.so case/sys/
           if [ "${{ matrix.libset }}" = "fresh" ]; then
             cp lab-input/libeci.so lab-input/libenu.so lab-input/libc++_shared.so case/libs/
           else

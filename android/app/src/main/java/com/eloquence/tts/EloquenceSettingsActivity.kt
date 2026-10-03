@@ -58,6 +58,17 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
         val scroll = ScrollView(this).apply { addView(root) }
         setContentView(scroll)
 
+        // Installed version, so a test report can name the exact build.
+        root.addView(TextView(this).apply {
+            textSize = 12f
+            text = try {
+                val pi = packageManager.getPackageInfo(packageName, 0)
+                "Version ${pi.versionName} (${pi.versionCode})"
+            } catch (e: Exception) {
+                ""
+            }
+        })
+
         root.addView(header("Speech rate"))
         rateValue = TextView(this)
         root.addView(rateValue)

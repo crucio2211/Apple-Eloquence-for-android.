@@ -62,9 +62,11 @@ jobs:
           export ANDROID_HOME=/usr/local/lib/android/sdk
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
             "system-images;android-28;google_apis;arm64-v8a" \
-            "system-images;android-35;google_apis;arm64-v8a"
+            "system-images;android-30;google_apis;arm64-v8a" \
+            "system-images;android-33;google_apis;arm64-v8a"
           ls -la /usr/local/lib/android/sdk/system-images/android-28/google_apis/arm64-v8a/
-          ls -la /usr/local/lib/android/sdk/system-images/android-35/google_apis/arm64-v8a/
+          ls -la /usr/local/lib/android/sdk/system-images/android-30/google_apis/arm64-v8a/
+          ls -la /usr/local/lib/android/sdk/system-images/android-33/google_apis/arm64-v8a/
 
       - name: Upload lab inputs
         uses: actions/upload-artifact@v4
@@ -80,11 +82,18 @@ jobs:
           path: /usr/local/lib/android/sdk/system-images/android-28/google_apis/arm64-v8a/system.img
           retention-days: 1
 
-      - name: Upload sysimg-35
+      - name: Upload sysimg-30
         uses: actions/upload-artifact@v4
         with:
-          name: sysimg-35
-          path: /usr/local/lib/android/sdk/system-images/android-35/google_apis/arm64-v8a/system.img
+          name: sysimg-30
+          path: /usr/local/lib/android/sdk/system-images/android-30/google_apis/arm64-v8a/system.img
+          retention-days: 1
+
+      - name: Upload sysimg-33
+        uses: actions/upload-artifact@v4
+        with:
+          name: sysimg-33
+          path: /usr/local/lib/android/sdk/system-images/android-33/google_apis/arm64-v8a/system.img
           retention-days: 1
 
   test:
@@ -93,14 +102,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api: [28, 35]
+        api: [28, 30, 33]
         libset: [fresh, proven]
     steps:
       - name: Install tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq curl unzip android-sdk-libsparse-utils e2fsprogs gdisk file
-          sudo apt-get install -y -qq erofs-utils fuse 2>&1 | tail -1 || echo "no erofs-utils"
+          sudo apt-get install -y -qq curl unzip kpartx e2fsprogs
 
       - name: Download inputs
         uses: actions/download-artifact@v4
@@ -114,47 +122,39 @@ jobs:
           name: sysimg-${{ matrix.api }}
           path: sysimg/
 
-      - name: Extract linker + Bionic libs
+      - name: Extract linker + Bionic libs (kpartx + mount + search)
         run: |
-          mkdir -p sysroot
+          mkdir -p sysroot mnt
           IMG=$(find sysimg -name 'system.img' | head -1)
           echo "image: $IMG"
           ls -la "$IMG"
-          simg2img "$IMG" system.raw || cp "$IMG" system.raw
-          # Newer images are GPT-partitioned: carve out the system partition.
-          if debugfs -R "ls" system.raw 2>&1 | grep -q "Bad magic"; then
-            echo "--- partition table ---"
-            sgdisk --print system.raw || true
-            START=$(sgdisk --print system.raw 2>/dev/null | awk '$NF ~ /^system(_a)?$/ {print $2; exit}')
-            if [ -z "$START" ]; then
-              START=$(sgdisk --print system.raw 2>/dev/null | awk '$NF ~ /system/ {print $2; exit}')
+          # Map every partition, mount each ext4 one, and hunt for the
+          # Bionic userland (bin/linker64 + lib64/{libc,libm,libdl}.so).
+          sudo kpartx -av "$IMG"
+          sleep 2
+          ls /dev/mapper/ || true
+          FOUND=""
+          for dev in /dev/mapper/loop*p*; do
+            [ -b "$dev" ] || continue
+            echo "--- trying $dev ---"
+            if sudo mount -o ro "$dev" mnt 2>/dev/null; then
+              if [ -f mnt/bin/linker64 ] && [ -f mnt/lib64/libc.so ]; then
+                echo "FOUND userland on $dev"
+                FOUND="$dev"
+                sudo cp mnt/bin/linker64 sysroot/
+                sudo cp mnt/lib64/libc.so mnt/lib64/libm.so mnt/lib64/libdl.so sysroot/
+                sudo umount mnt
+                break
+              fi
+              echo "not a system fs; contents:"
+              ls mnt/ | head -20 || true
+              sudo umount mnt
+            else
+              echo "mount failed for $dev"
             fi
-            echo "system partition starts at sector $START"
-            dd if=system.raw of=part.ext4 bs=512 skip="$START" status=none
-          SYSIMG=part.ext4
-          else
-            SYSIMG=system.raw
-          fi
-          file "$SYSIMG" || true
-          echo "--- fs root ---"
-          debugfs -R "ls -l" "$SYSIMG" 2>&1 | head -30 || true
-          echo "--- lib dirs ---"
-          for d in lib64 lib system/lib64 system/lib; do
-            echo "== $d =="; debugfs -R "ls -l $d" "$SYSIMG" 2>&1 | head -12 || true
           done
-          # If ext4 has no Bionic libs (e.g. erofs image), try erofsfuse.
-          if ! debugfs -R "ls lib64/libc.so" "$SYSIMG" 2>&1 | grep -q .; then
-            echo "trying erofs..."
-          fi
-          for f in "bin/linker64|linker64" "lib64/libc.so|libc.so" \
-                   "lib64/libm.so|libm.so" "lib64/libdl.so|libdl.so" \
-                   "lib/libc.so|libc.so" "lib/libm.so|libm.so" "lib/libdl.so|libdl.so"; do
-            src="${f%%|*}"; dst="${f##*|}";
-            [ -f "sysroot/$dst" ] && continue
-            debugfs -R "dump $src sysroot/$dst" "$SYSIMG" 2>&1 || \
-            debugfs -R "dump system/$src sysroot/$dst" "$SYSIMG" 2>&1 || true
-          done
-          chmod +x sysroot/linker64 2>/dev/null || true
+          sudo kpartx -dv "$IMG" || true
+          chmod +x sysroot/linker64
           ls -la sysroot/
           test -f sysroot/linker64 -a -f sysroot/libc.so -a -f sysroot/libm.so -a -f sysroot/libdl.so
 

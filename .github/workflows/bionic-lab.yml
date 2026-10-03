@@ -174,9 +174,9 @@ jobs:
           cd case
           ls -la sys/ libs/ harness
           echo "--- harness INTERP (parsed, errors fatal) ---"
-          python3 - ../harness <<'PY'
+          python3 - <<'PY'
           import struct, sys
-          raw = open(sys.argv[1], 'rb').read()
+          raw = open('./harness', 'rb').read()
           print('file bytes:', len(raw))
           assert raw[:4] == b'\x7fELF', 'not ELF!'
           phoff = struct.unpack_from('<Q', raw, 0x20)[0]

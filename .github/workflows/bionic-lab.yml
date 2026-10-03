@@ -84,17 +84,28 @@ jobs:
               "https://dl.google.com/android/repository/repository2-1.xml").read()
           print(f"xml bytes: {len(data)}", flush=True)
           root = ET.fromstring(data)
-          ns = {"r": "http://schemas.android.com/repository/android/common/01",
-                "s": "http://schemas.android.com/repository/android/generic/01"}
-          for pkg in root.iter("{http://schemas.android.com/repository/android/generic/01}system-image"):
+          found = False
+          for pkg in root.iter():
+              if not pkg.tag.endswith("remotePackage"):
+                  continue
               if pkg.get("path") != want:
                   continue
-              for arch in pkg.findall("s:archives/s:archive", ns):
-                  url = arch.find("s:complete/s:url", ns).text.strip()
-                  size = arch.find("s:complete/s:size", ns).text.strip()
-                  print(f"URL={url}", flush=True)
-                  print(f"SIZE={size}", flush=True)
-                  open(os.environ["GITHUB_ENV"], "a").write(f"SYSURL={url}\nSYSSIZE={size}\n")
+              for arch in pkg.iter():
+                  if not arch.tag.endswith("archive"):
+                      continue
+                  url = size = None
+                  for c in arch.iter():
+                      if c.tag.endswith("url") and url is None:
+                          url = (c.text or "").strip()
+                      if c.tag.endswith("size") and size is None:
+                          size = (c.text or "").strip()
+                  if url:
+                      print(f"URL={url}", flush=True)
+                      print(f"SIZE={size}", flush=True)
+                      open(os.environ["GITHUB_ENV"], "a").write(f"SYSURL={url}\nSYSSIZE={size}\n")
+                      found = True
+          if not found:
+              print("no sys-img url found", flush=True)
           PY
           test -n "$SYSURL" || { echo "no sys-img url found"; exit 1; }
           curl -fSL -o sysimg.zip "$SYSURL"

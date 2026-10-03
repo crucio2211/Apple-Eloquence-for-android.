@@ -94,8 +94,8 @@ jobs:
             -DBUILD_EXAMPLES=OFF \
             -DWITH_OPENMP=OFF
           cmake --build soxr-build -j"$(nproc)"
-          find soxr-build -name 'libsoxr.so*'
-          cp "$(find soxr-build -name 'libsoxr.so.0*' | head -1)" \
+          ls -la soxr-build/src/libsoxr.so*
+          cp soxr-build/src/libsoxr.so \
             android/app/src/main/jniLibs/arm64-v8a/libsoxr.so
           echo "SOXR_INC=$PWD/soxr/src" >> "$GITHUB_ENV"
           echo "--- staged jniLibs ---"

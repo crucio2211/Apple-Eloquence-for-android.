@@ -166,6 +166,29 @@ jobs:
           EOF
           ls -la case/ case/libs/ case/sys/
 
+      - name: Diagnose loader + harness
+        run: |
+          cd case
+          ls -la sys/ libs/ harness
+          echo "--- harness INTERP + NEEDED (parsed) ---"
+          python3 - ../harness <<'PY' || true
+          import struct, sys
+          f = open(sys.argv[1], 'rb').read()
+          phoff = struct.unpack_from('<Q', f, 0x20)[0]
+          phentsz, phnum = struct.unpack_from('<HH', f, 0x36)
+          for i in range(phnum):
+              o = phoff + i * phentsz
+              ty = struct.unpack_from('<I', f, o)[0]
+              if ty == 3:  # PT_INTERP
+                  off = struct.unpack_from('<Q', f, o + 8)[0]
+                  sz = struct.unpack_from('<Q', f, o + 16)[0]
+                  print('INTERP:', f[off:off + sz])
+          PY
+          echo "--- linker --help ---"
+          ./sys/linker64 --help; echo "EXIT=$?"
+          echo "--- linker --list harness ---"
+          LD_LIBRARY_PATH="$PWD/sys:$PWD/libs" ./sys/linker64 --list ./harness; echo "EXIT=$?"
+
       - name: Run harness under Bionic linker64
         # NOTE: old linkers want LD_LIBRARY_PATH, not --library-path.
         run: |

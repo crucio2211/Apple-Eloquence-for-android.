@@ -21,7 +21,7 @@ data class EloqSettings(
     val rate: Int,
     val pitch: Int,
     val volume: Int,
-    val higherRate: Boolean,
+    val sampleMode: Int,
     val voice: Int,
     val language: Int,
 )
@@ -31,17 +31,23 @@ object EloquencePrefs {
     const val KEY_RATE = "rate"
     const val KEY_PITCH = "pitch"
     const val KEY_VOLUME = "volume"
-    const val KEY_HIGHER_RATE = "higher_rate"
+    const val KEY_SAMPLE_MODE = "sample_mode"
     const val KEY_VOICE = "voice"
     const val KEY_LANGUAGE = "language"
 
-    /** libsoxr upsampling target for the checkbox. */
+    /** Sample-rate choices (dropdown order). */
+    const val MODE_11025_NATIVE = 0
+    const val MODE_8000_NATIVE = 1
+    const val MODE_16000_TEST = 2
+    const val MODE_48000_SOXSR = 3
+
+    /** libsoxr upsampling target for the 48k choice. */
     const val HIGH_RATE_HZ = 48000
 
     const val DEFAULT_RATE = 100
     const val DEFAULT_PITCH = 100
     const val DEFAULT_VOLUME = 90
-    const val DEFAULT_HIGHER_RATE = true
+    const val DEFAULT_SAMPLE_MODE = MODE_48000_SOXSR
     const val DEFAULT_VOICE = 0
     const val DEFAULT_LANGUAGE = 0
 
@@ -96,11 +102,18 @@ object EloquencePrefs {
 
     fun load(ctx: Context): EloqSettings {
         val p = ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+        // Migrate the old higher-rate checkbox (0.7.x): ON -> 48k choice.
+        val mode = if (p.contains(KEY_SAMPLE_MODE)) {
+            p.getInt(KEY_SAMPLE_MODE, DEFAULT_SAMPLE_MODE)
+        } else {
+            if (p.getBoolean("higher_rate", true)) MODE_48000_SOXSR
+            else MODE_11025_NATIVE
+        }
         return EloqSettings(
             rate = p.getInt(KEY_RATE, DEFAULT_RATE).coerceIn(50, 200),
             pitch = p.getInt(KEY_PITCH, DEFAULT_PITCH).coerceIn(50, 200),
             volume = p.getInt(KEY_VOLUME, DEFAULT_VOLUME).coerceIn(0, 100),
-            higherRate = p.getBoolean(KEY_HIGHER_RATE, DEFAULT_HIGHER_RATE),
+            sampleMode = mode.coerceIn(0, 3),
             voice = p.getInt(KEY_VOICE, DEFAULT_VOICE).coerceIn(0, 7),
             language = p.getInt(KEY_LANGUAGE, DEFAULT_LANGUAGE)
                 .coerceIn(0, LANGUAGES.size - 1),
@@ -112,7 +125,7 @@ object EloquencePrefs {
             .putInt(KEY_RATE, s.rate.coerceIn(50, 200))
             .putInt(KEY_PITCH, s.pitch.coerceIn(50, 200))
             .putInt(KEY_VOLUME, s.volume.coerceIn(0, 100))
-            .putBoolean(KEY_HIGHER_RATE, s.higherRate)
+            .putInt(KEY_SAMPLE_MODE, s.sampleMode.coerceIn(0, 3))
             .putInt(KEY_VOICE, s.voice.coerceIn(0, 7))
             .putInt(KEY_LANGUAGE, s.language.coerceIn(0, LANGUAGES.size - 1))
             .apply()

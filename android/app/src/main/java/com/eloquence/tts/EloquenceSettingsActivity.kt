@@ -20,7 +20,6 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.SeekBar
@@ -41,7 +40,7 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
     private lateinit var rateBar: SeekBar
     private lateinit var pitchBar: SeekBar
     private lateinit var volumeBar: SeekBar
-    private lateinit var rateBox: CheckBox
+    private lateinit var rateSpinner: Spinner
     private lateinit var voiceSpinner: Spinner
     private lateinit var languageSpinner: Spinner
     private lateinit var diagText: TextView
@@ -93,10 +92,17 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
             text = getString(R.string.settings_rate_note)
             textSize = 12f
         })
-        rateBox = CheckBox(this).apply {
-            text = getString(R.string.settings_higher_rate, EloquencePrefs.HIGH_RATE_HZ)
+        rateSpinner = Spinner(this)
+        rateSpinner.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_item,
+            listOf(
+                "11025 Hz (native)",
+                "8000 Hz (native)",
+                "16000 Hz (ECI test)",
+                "${EloquencePrefs.HIGH_RATE_HZ} Hz (libsoxr high quality)")).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
-        root.addView(rateBox)
+        root.addView(rateSpinner)
 
         root.addView(header("Voice"))
         voiceSpinner = Spinner(this)
@@ -141,7 +147,7 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
         rateBar.progress = prefs.rate - 50
         pitchBar.progress = prefs.pitch - 50
         volumeBar.progress = prefs.volume
-        rateBox.isChecked = prefs.higherRate
+        rateSpinner.setSelection(prefs.sampleMode)
         voiceSpinner.setSelection(prefs.voice)
         languageSpinner.setSelection(prefs.language)
         diagText.text = getString(R.string.settings_diag_hint)
@@ -156,8 +162,8 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
         volumeBar.setOnSeekBarChangeListener(saver {
             persist(volume = volumeBar.progress); refreshLabels()
         })
-        rateBox.setOnCheckedChangeListener { _, checked ->
-            persist(higherRate = checked)
+        rateSpinner.onItemSelectedListener = selectedSaver {
+            persist(sampleMode = rateSpinner.selectedItemPosition)
         }
         voiceSpinner.onItemSelectedListener = selectedSaver {
             persist(voice = voiceSpinner.selectedItemPosition)
@@ -231,7 +237,7 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
 
     private fun persist(
         rate: Int? = null, pitch: Int? = null, volume: Int? = null,
-        higherRate: Boolean? = null, voice: Int? = null, language: Int? = null,
+        sampleMode: Int? = null, voice: Int? = null, language: Int? = null,
     ) {
         val cur = EloquencePrefs.load(this)
         EloquencePrefs.save(
@@ -240,61 +246,64 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
                 rate = rate ?: cur.rate,
                 pitch = pitch ?: cur.pitch,
                 volume = volume ?: cur.volume,
-                higherRate = higherRate ?: cur.higherRate,
+                sampleMode = sampleMode ?: cur.sampleMode,
                 voice = voice ?: cur.voice,
                 language = language ?: cur.language,
             )
         )
     }
 
-    /** Probe the native engine and report each step (stays off the UI thread). */
+    /**
+     * Run diagnostics in the :probe process and show the result file.
+     * A native crash kills only the probe process: after 30s without a
+     * result file, report it as a native crash instead of dying with it.
+     */
     private fun checkEngine() {
         diagText.text = getString(R.string.settings_diag_running)
+        val resultFile = File(filesDir, ProbeService.RESULT_FILE)
+        try {
+            if (resultFile.exists()) resultFile.delete()
+        } catch (_: Exception) {
+        }
+        val prefs = EloquencePrefs.load(this)
+        val langIdx = prefs.language.coerceIn(0, EloquencePrefs.LANGUAGES.size - 1)
+        try {
+            startService(Intent(this, ProbeService::class.java)
+                .putExtra(ProbeService.EXTRA_LIB_DIR,
+                    applicationInfo.nativeLibraryDir)
+                .putExtra(ProbeService.EXTRA_DIALECT,
+                    EloquencePrefs.LANGUAGE_DIALECTS[langIdx])
+                .putExtra(ProbeService.EXTRA_MODULE,
+                    EloquencePrefs.LANGUAGE_MODULES[langIdx])
+                .putExtra(ProbeService.EXTRA_ROMANIZER,
+                    EloquencePrefs.LANGUAGE_ROMANIZERS[langIdx]))
+        } catch (e: Exception) {
+            diagText.text = "Could not start probe service: ${e.message}"
+            return
+        }
         Thread {
-            val sb = StringBuilder()
-            try {
-                sb.append("device: SDK ${android.os.Build.VERSION.SDK_INT} " +
-                    "${android.os.Build.SUPPORTED_ABIS.firstOrNull() ?: "?"}\n")
-                val libDir = applicationInfo.nativeLibraryDir
-                sb.append("libDir: $libDir\n")
-                val sos = try {
-                    File(libDir).listFiles()
-                        ?.map { it.name }?.filter { it.endsWith(".so") }?.sorted()
-                        ?: emptyList()
-                } catch (e: Exception) {
-                    sb.append("libDir list FAILED: ${e.message}\n")
-                    emptyList()
+            var waited = 0
+            var text: String? = null
+            while (waited < 30000) {
+                try {
+                    Thread.sleep(500)
+                } catch (_: InterruptedException) {
+                    break
                 }
-                sb.append("so files: ${sos.size}\n")
-                for (n in arrayOf(
-                    "libeloquence_jni.so", "libeci.so", "libenu.so",
-                    "libc++_shared.so", "libsoxr.so")) {
-                    sb.append("  $n: ${if (sos.contains(n)) "ok" else "MISSING"}\n")
+                waited += 500
+                try {
+                    if (resultFile.exists()) {
+                        text = resultFile.readText()
+                        break
+                    }
+                } catch (_: Exception) {
                 }
-                val prefs = EloquencePrefs.load(this)
-                sb.append("higherRate checkbox: ${if (prefs.higherRate) "ON" else "OFF"}\n")
-                sb.append("soxr self-test: ${try {
-                    EloquenceNative.nativeSoxrSelfTest()
-                } catch (e: Throwable) {
-                    "EXCEPTION ${e.javaClass.simpleName}: ${e.message}"
-                }}\n")
-                val ini = File(filesDir, "eci.ini")
-                sb.append("eci.ini: ${if (ini.exists()) "${ini.length()} bytes" else "MISSING"}\n")
-                val langIdx = prefs.language.coerceIn(0, EloquencePrefs.LANGUAGES.size - 1)
-                val dialect = EloquencePrefs.LANGUAGE_DIALECTS[langIdx]
-                val probe = try {
-                    EloquenceNative.nativeProbe(
-                        filesDir.absolutePath, libDir, dialect,
-                        EloquencePrefs.LANGUAGE_MODULES[langIdx],
-                        EloquencePrefs.LANGUAGE_ROMANIZERS[langIdx])
-                } catch (e: Throwable) {
-                    "probe EXCEPTION ${e.javaClass.simpleName}: ${e.message}\n"
-                }
-                sb.append("--- probe ---\n").append(probe)
-            } catch (e: Throwable) {
-                sb.append("EXCEPTION ${e.javaClass.simpleName}: ${e.message}\n")
             }
-            val out = sb.toString()
+            val out = text
+                ?: "Probe did not finish in 30s — the native engine CRASHED " +
+                    "during probing (process died). The UI survived because " +
+                    "the probe runs isolated. This usually means dlopen or " +
+                    "eciNewEx crashes on this device/OS version."
             runOnUiThread { diagText.text = out }
         }.start()
     }
@@ -334,27 +343,39 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
                         getString(R.string.settings_sample)
                             .toByteArray(Charsets.US_ASCII)
                     }
-                    // Engine renders 11025 Hz natively; optional libsoxr
-                    // upsample to 48000 Hz when the checkbox is on.
+                    // Engine rate via the ECI command; 48k choice upsamples
+                    // the native render with libsoxr (very-high-quality).
+                    val eciParam = when (prefs.sampleMode) {
+                        EloquencePrefs.MODE_8000_NATIVE -> 0
+                        EloquencePrefs.MODE_16000_TEST -> 2
+                        else -> 1
+                    }
+                    var engineHz = if (eciParam == 0) 8000 else 11025
                     try {
-                        EloquenceNative.nativeSetSampleRate(h, 1)
+                        if (EloquenceNative.nativeSetSampleRate(h, eciParam) < 0) {
+                            EloquenceNative.nativeSetSampleRate(h, 1)
+                            engineHz = 11025
+                        } else if (eciParam == 2) {
+                            engineHz = 16000
+                        }
                     } catch (e: Exception) {
+                        engineHz = 11025
                     }
                     val pcm = EloquenceNative.nativeSynthesize(h, bytes)
                     if (pcm == null) {
                         msg = "synth FAILED (null)"
-                    } else if (prefs.higherRate) {
+                    } else if (prefs.sampleMode == EloquencePrefs.MODE_48000_SOXSR) {
                         val up = try {
                             EloquenceNative.nativeResample(
-                                pcm, 11025, EloquencePrefs.HIGH_RATE_HZ)
+                                pcm, engineHz, EloquencePrefs.HIGH_RATE_HZ)
                         } catch (e: Exception) {
                             null
                         }
                         if (up == null) {
                             msg = "resample FAILED, playing native…"
                             runOnUiThread { diagText.text = msg }
-                            playPcm(pcm, 11025)
-                            msg = "played ${pcm.size} samples @ 11025 Hz"
+                            playPcm(pcm, engineHz)
+                            msg = "played ${pcm.size} samples @ $engineHz Hz"
                         } else {
                             msg = "playing ${up.size} samples @ ${EloquencePrefs.HIGH_RATE_HZ} Hz…"
                             runOnUiThread { diagText.text = msg }
@@ -362,10 +383,10 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
                             msg = "played ${up.size} samples @ ${EloquencePrefs.HIGH_RATE_HZ} Hz"
                         }
                     } else {
-                        msg = "playing ${pcm.size} samples @ 11025 Hz…"
+                        msg = "playing ${pcm.size} samples @ $engineHz Hz…"
                         runOnUiThread { diagText.text = msg }
-                        playPcm(pcm, 11025)
-                        msg = "played ${pcm.size} samples @ 11025 Hz"
+                        playPcm(pcm, engineHz)
+                        msg = "played ${pcm.size} samples @ $engineHz Hz"
                     }
                 }
             } catch (e: Throwable) {

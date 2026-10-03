@@ -18,6 +18,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Isolated diagnostics process: native crashes during probing
+             kill only this process, never the UI. -->
+        <service
+            android:name=".ProbeService"
+            android:process=":probe"
+            android:exported="false" />
+
         <!-- The TextToSpeechService. The system enumerates engines by the
              TTS_SERVICE intent filter; the meta-data points at the engine
              descriptor. -->

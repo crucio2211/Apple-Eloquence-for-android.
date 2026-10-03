@@ -207,28 +207,43 @@ class EloquenceTtsService : TextToSpeechService() {
                 EloquenceNative.nativeSetProsody(
                     handle, rate, pitch, volume.coerceIn(0, 100))
 
-                // Engine always renders 11025 Hz natively (ECI command).
+                // Engine rate via the ECI command (eciSampleRate=5):
+                // 0=8kHz, 1=11025Hz, 2=test. Rejected values fall back
+                // to 11025. The 48k choice renders 11025 natively, then
+                // upsamples with libsoxr (very-high-quality).
+                val eciParam = when (prefs.sampleMode) {
+                    EloquencePrefs.MODE_8000_NATIVE -> 0
+                    EloquencePrefs.MODE_16000_TEST -> 2
+                    else -> 1
+                }
+                var engineHz = if (eciParam == 0) 8000 else ENGINE_RATE
                 try {
-                    EloquenceNative.nativeSetSampleRate(handle, 1)
+                    if (EloquenceNative.nativeSetSampleRate(handle, eciParam) < 0) {
+                        Log.w(TAG, "eciSampleRate=$eciParam rejected, fell back to 11025")
+                        EloquenceNative.nativeSetSampleRate(handle, 1)
+                        engineHz = ENGINE_RATE
+                    } else if (eciParam == 2) {
+                        Log.i(TAG, "eciSampleRate=2 accepted (16kHz path)")
+                        engineHz = 16000
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "nativeSetSampleRate failed", e)
+                    engineHz = ENGINE_RATE
                 }
 
                 val pcm = EloquenceNative.nativeSynthesize(handle, encodeForDialect(text, v.dialect))
                 if (pcm == null) { callback.error(); return }
-                // Higher sampling rate checkbox: libsoxr VHQ upsample to
-                // 48000 Hz; otherwise native 11025 Hz straight through.
-                if (prefs.higherRate) {
+                if (prefs.sampleMode == EloquencePrefs.MODE_48000_SOXSR) {
                     val up = try {
-                        EloquenceNative.nativeResample(pcm, ENGINE_RATE, EloquencePrefs.HIGH_RATE_HZ)
+                        EloquenceNative.nativeResample(pcm, engineHz, EloquencePrefs.HIGH_RATE_HZ)
                     } catch (e: Exception) {
                         Log.e(TAG, "nativeResample failed", e)
                         null
                     }
                     if (up != null) deliver(up, EloquencePrefs.HIGH_RATE_HZ, callback)
-                    else deliver(pcm, ENGINE_RATE, callback)
+                    else deliver(pcm, engineHz, callback)
                 } else {
-                    deliver(pcm, ENGINE_RATE, callback)
+                    deliver(pcm, engineHz, callback)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "synthesis failed", e)

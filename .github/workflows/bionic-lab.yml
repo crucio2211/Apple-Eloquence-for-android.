@@ -167,6 +167,7 @@ jobs:
             fi
           done
           sudo kpartx -dv "$IMG" || true
+          sudo chown -R $(id -u):$(id -g) sysroot
           chmod +x sysroot/linker64
           ls -la sysroot/
           test -f sysroot/linker64 -a -f sysroot/libc.so -a -f sysroot/libm.so -a -f sysroot/libdl.so

@@ -91,7 +91,7 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq curl unzip kpartx e2fsprogs
+          sudo apt-get install -y -qq curl unzip kpartx e2fsprogs strace
 
       - name: Download inputs
         uses: actions/download-artifact@v4
@@ -206,3 +206,11 @@ jobs:
           echo "=== api=${{ matrix.api }} libset=${{ matrix.libset }} ==="
           export LD_LIBRARY_PATH="$PWD/sys:$PWD/libs"
           timeout 120 ./sys/linker64 ./harness "$PWD/libs/libeci.so" "$PWD/eci.ini" 10000; echo "EXIT=$?"
+
+      - name: Strace the loader (fresh libs only)
+        if: matrix.libset == 'fresh'
+        run: |
+          cd case
+          export LD_LIBRARY_PATH="$PWD/sys:$PWD/libs"
+          timeout 60 strace -f -e trace=%process,openat,open ./sys/linker64 ./harness "$PWD/libs/libeci.so" "$PWD/eci.ini" 10000 > strace.log 2>&1; echo "EXIT=$?"
+          grep -E "execve|ENOENT|harness|libeci|libc\.so|exited|killed|SIG|helper" strace.log | head -40 || true

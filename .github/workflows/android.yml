@@ -104,3 +104,24 @@ jobs:
           name: eloquence-tts-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
+
+  # One-time bootstrap: generate the stable test-signing key and upload it.
+  # Download elo-debug.keystore from the run, commit it to the repo root,
+  # then DELETE this job. (Test key only — never use for real releases.)
+  make-keystore:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Create stable test key
+        run: |
+          keytool -genkeypair -keystore elo-debug.keystore -alias androiddebugkey \
+            -storepass android -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10950 \
+            -dname "CN=Eloquence Test Key"
+
+      - name: Upload keystore
+        uses: actions/upload-artifact@v4
+        with:
+          name: elo-debug-keystore
+          path: elo-debug.keystore
+          retention-days: 1

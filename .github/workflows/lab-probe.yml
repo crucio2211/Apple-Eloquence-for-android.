@@ -1,0 +1,47 @@
+# Lab probe (manual only): can this ARM runner host Bionic tests?
+# Checks KVM + downloads two system images and lists their contents.
+name: Lab-Probe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Check KVM and CPU
+        run: |
+          ls -la /dev/kvm 2>&1 || echo "NO /dev/kvm"
+          uname -m
+          nproc
+          free -g | head -3
+          df -h / | tail -1
+
+      - name: Check Android SDK
+        run: |
+          ls /usr/local/lib/android/sdk/cmdline-tools/ 2>&1 || echo "no cmdline-tools"
+          ls /usr/local/lib/android/sdk/system-images/ 2>&1 || echo "no system-images yet"
+
+      - name: Download system images (API 28 + 35, arm64)
+        run: |
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+            "platform-tools" \
+            "system-images;android-28;google_apis;arm64-v8a" \
+            "system-images;android-35;google_apis;arm64-v8a"
+
+      - name: List image contents
+        run: |
+          find /usr/local/lib/android/sdk/system-images -maxdepth 4 | head -40
+          echo "--- api28 dir ---"
+          ls -la /usr/local/lib/android/sdk/system-images/android-28/google_apis/arm64-v8a/ || true
+          echo "--- api35 dir ---"
+          ls -la /usr/local/lib/android/sdk/system-images/android-35/google_apis/arm64-v8a/ || true
+
+      - name: Check simg2img availability
+        run: |
+          which simg2img debugfs 2>&1 || echo "missing tools"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq android-sdk-libsparse-utils e2fsprogs 2>&1 | tail -2
+          which simg2img debugfs

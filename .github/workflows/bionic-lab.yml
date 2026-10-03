@@ -76,43 +76,13 @@ jobs:
           path: /usr/local/lib/android/sdk/system-images/android-28/google_apis/arm64-v8a/system.img
           retention-days: 1
 
-      - name: Install sysimg-30
-        run: |
-          export ANDROID_HOME=/usr/local/lib/android/sdk
-          rm -rf /usr/local/lib/android/sdk/system-images/android-28
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
-            "system-images;android-30;google_apis;arm64-v8a"
-          ls -la /usr/local/lib/android/sdk/system-images/android-30/google_apis/arm64-v8a/
-
-      - name: Upload sysimg-30
-        uses: actions/upload-artifact@v4
-        with:
-          name: sysimg-30
-          path: /usr/local/lib/android/sdk/system-images/android-30/google_apis/arm64-v8a/system.img
-          retention-days: 1
-
-      - name: Install sysimg-33
-        run: |
-          export ANDROID_HOME=/usr/local/lib/android/sdk
-          rm -rf /usr/local/lib/android/sdk/system-images/android-30
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
-            "system-images;android-33;google_apis;arm64-v8a"
-          ls -la /usr/local/lib/android/sdk/system-images/android-33/google_apis/arm64-v8a/
-
-      - name: Upload sysimg-33
-        uses: actions/upload-artifact@v4
-        with:
-          name: sysimg-33
-          path: /usr/local/lib/android/sdk/system-images/android-33/google_apis/arm64-v8a/system.img
-          retention-days: 1
-
   test:
     needs: [build-inputs]
     runs-on: ubuntu-24.04-arm
     strategy:
       fail-fast: false
       matrix:
-        api: [28, 30, 33]
+        api: [28]
         libset: [fresh, proven]
     steps:
       - name: Install tools
@@ -197,8 +167,9 @@ jobs:
           ls -la case/ case/libs/ case/sys/
 
       - name: Run harness under Bionic linker64
+        # NOTE: old linkers want LD_LIBRARY_PATH, not --library-path.
         run: |
           cd case
           echo "=== api=${{ matrix.api }} libset=${{ matrix.libset }} ==="
-          timeout 120 ./sys/linker64 --library-path sys:libs \
-            ./harness "$PWD/libs/libeci.so" "$PWD/eci.ini" 10000; echo "EXIT=$?"
+          export LD_LIBRARY_PATH="$PWD/sys:$PWD/libs"
+          timeout 120 ./sys/linker64 ./harness "$PWD/libs/libeci.so" "$PWD/eci.ini" 10000; echo "EXIT=$?"

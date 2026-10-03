@@ -268,12 +268,18 @@ class EloquenceSettingsActivity : Activity(), TextToSpeech.OnInitListener {
                 sb.append("so files: ${sos.size}\n")
                 for (n in arrayOf(
                     "libeloquence_jni.so", "libeci.so", "libenu.so",
-                    "libc++_shared.so")) {
+                    "libc++_shared.so", "libsoxr.so")) {
                     sb.append("  $n: ${if (sos.contains(n)) "ok" else "MISSING"}\n")
                 }
+                val prefs = EloquencePrefs.load(this)
+                sb.append("higherRate checkbox: ${if (prefs.higherRate) "ON" else "OFF"}\n")
+                sb.append("soxr self-test: ${try {
+                    EloquenceNative.nativeSoxrSelfTest()
+                } catch (e: Throwable) {
+                    "EXCEPTION ${e.javaClass.simpleName}: ${e.message}"
+                }}\n")
                 val ini = File(filesDir, "eci.ini")
                 sb.append("eci.ini: ${if (ini.exists()) "${ini.length()} bytes" else "MISSING"}\n")
-                val prefs = EloquencePrefs.load(this)
                 val langIdx = prefs.language.coerceIn(0, EloquencePrefs.LANGUAGES.size - 1)
                 val dialect = EloquencePrefs.LANGUAGE_DIALECTS[langIdx]
                 val probe = try {

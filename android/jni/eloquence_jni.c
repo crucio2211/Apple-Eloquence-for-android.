@@ -480,6 +480,33 @@ Java_com_eloquence_tts_EloquenceNative_nativeResample(JNIEnv *env, jclass c,
 #endif
 }
 
+/* soxr self-test for the on-device diagnostics screen: resamples 2205
+ * dummy samples 11025 -> 48000 and reports. Never null. */
+JNIEXPORT jstring JNICALL
+Java_com_eloquence_tts_EloquenceNative_nativeSoxrSelfTest(JNIEnv *env, jclass c) {
+    (void)c;
+#ifdef HAVE_SOXSR
+    static short dummy[2205];
+    for (int i = 0; i < 2205; i++) dummy[i] = (short)(8000 * ((i % 100) / 50.0 - 1.0));
+    size_t outCap = (size_t)2205 * 48000 / 11025 + 128;
+    short *out = (short *)malloc(outCap * sizeof(short));
+    if (!out) return (*env)->NewStringUTF(env, "FAIL: malloc");
+    soxr_io_spec_t io = soxr_io_spec(SOXR_INT16_I, SOXR_INT16_I);
+    soxr_quality_spec_t q = soxr_quality_spec(SOXR_VHQ, 0);
+    size_t idone = 0, odone = 0;
+    soxr_error_t e = soxr_oneshot(11025.0, 48000.0, 1,
+                                  dummy, 2205, &idone,
+                                  out, outCap, &odone, &io, &q, NULL);
+    char buf[256];
+    if (e) snprintf(buf, sizeof buf, "FAIL: %s", e);
+    else snprintf(buf, sizeof buf, "OK in=2205 out=%zu", odone);
+    free(out);
+    return (*env)->NewStringUTF(env, buf);
+#else
+    return (*env)->NewStringUTF(env, "no-soxr-build");
+#endif
+}
+
 JNIEXPORT void JNICALL
 Java_com_eloquence_tts_EloquenceNative_nativeStop(JNIEnv *env, jclass c, jlong handle) {
     (void)env; (void)c;

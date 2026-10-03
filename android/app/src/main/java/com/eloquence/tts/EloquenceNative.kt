@@ -47,6 +47,12 @@ object EloquenceNative {
     external fun nativeResample(pcm: ShortArray, fromRate: Int, toRate: Int): ShortArray?
 
     /**
+     * soxr self-test for diagnostics: resamples dummy audio 11025->48000.
+     * Never null; e.g. "OK in=2205 out=9600" or "FAIL: <reason>".
+     */
+    external fun nativeSoxrSelfTest(): String
+
+    /**
      * Step-by-step init probe: chdir, ECIINI, eci.ini dump, dlopen attempts
      * (with loader error text), language-lib loads, symbols,
      * eciNewEx/eciNew. Always returns a report string.

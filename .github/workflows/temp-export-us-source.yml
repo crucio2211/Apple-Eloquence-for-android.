@@ -1,0 +1,26 @@
+name: Temporary US English source export
+
+on:
+  push:
+    branches:
+      - tmp/export-us-enus-source-20261105
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage original Apple US English dylib
+        run: |
+          mkdir -p export
+          cp vendor/tvOS-18.2/enu.dylib export/enu.dylib
+          cp vendor/tvOS-18.2/eng.dylib export/eng.dylib
+          sha256sum export/*.dylib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: temporary-us-uk-source-dylibs
+          path: export/*.dylib
+          retention-days: 1

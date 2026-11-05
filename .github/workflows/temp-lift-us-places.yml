@@ -1,0 +1,45 @@
+name: Temporary lift of Apple US places rule
+
+on:
+  push:
+    branches:
+      - tmp/lift-us-places-20261105
+
+permissions:
+  contents: read
+
+jobs:
+  lift:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out OpenEVV US lift tools
+        uses: actions/checkout@v4
+        with:
+          repository: crucio2211/openevv-16k
+          ref: tmp/apple-eci61-us-lift-v4-20261105
+          path: openevv
+          persist-credentials: false
+      - name: Install Mach-O tools
+        run: |
+          set -euxo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq llvm
+          command -v llvm-lipo
+          command -v llvm-nm
+          command -v llvm-objdump
+      - name: Lift the US places rule
+        run: |
+          set -euxo pipefail
+          llvm-lipo -extract x86_64 vendor/tvOS-18.2/enu.dylib -output /tmp/enu-x86_64.dylib
+          cd openevv
+          python3 tools/rules/lift64.py rule /tmp/enu-x86_64.dylib places > lang/enus/rules/f61_38.up
+          test -s lang/enus/rules/f61_38.up
+          grep -n '^rule places takes' lang/enus/rules/f61_38.up
+          wc -l -c lang/enus/rules/f61_38.up
+      - name: Upload lifted US rule
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-us-places-rule
+          path: openevv/lang/enus/rules/f61_38.up
+          retention-days: 1

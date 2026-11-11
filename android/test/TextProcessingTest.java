@@ -28,7 +28,7 @@ public final class TextProcessingTest {
         eq("Hello!",PunctuationProcessing.apply("Hello!",PunctuationProcessing.MOST),"sentence prosody");
         eq("",PunctuationProcessing.apply(". .",PunctuationProcessing.SOME),"isolated dots in Some");
         eq("",PunctuationProcessing.apply(". .",PunctuationProcessing.MOST),"isolated dots in Most");
-        eq("dot",PunctuationProcessing.apply("dot.",PunctuationProcessing.SOME),"trailing dot remains a word");
+        eq("dot.",PunctuationProcessing.apply("dot.",PunctuationProcessing.SOME),"sentence-ending dot remains punctuation");
         eq("Chat Gpt Talk Back PDF File i Phone NVDA",CamelCase.apply("ChatGpt TalkBack PDFFile iPhone NVDA"),"camel-case splitting");
         try {
             java.io.File regexFile=java.io.File.createTempFile("reloq-regex",".dic");

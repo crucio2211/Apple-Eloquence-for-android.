@@ -182,6 +182,9 @@ public final class SettingsActivity extends Activity {
         numberProcessing=checkText("Number processing",preferences.getBoolean("numberProcessing",false));
         numberMode=selectText("Number grouping",new String[]{"Digits","Pairs","Triplets","Quadruplets"},
             VoiceSettings.bounded(preferences.getInt("numberMode",0),0,3));
+        splitCamelCase=checkText("Split camel-case words",preferences.getBoolean("splitCamelCase",true));
+        Button regexSettings=new Button(this);regexSettings.setText("Regular-expression dictionary settings");content.addView(regexSettings);
+        regexSettings.setOnClickListener(v -> startActivity(new Intent(this,RegexDictionaryActivity.class)));
         punctProcessing=checkText("Punctuation processing",preferences.getBoolean("punctProcessing",false));
         punctLevel=selectText("Punctuation level",new String[]{"None","Some","Most","All"},
             VoiceSettings.bounded(preferences.getInt("punctLevel",2),0,3));
@@ -256,6 +259,7 @@ public final class SettingsActivity extends Activity {
             .putInt("emojiCompress",emojiCompress!=null?emojiCompress.getSelectedItemPosition()+2:preferences.getInt("emojiCompress",3))
             .putBoolean("numberProcessing",numberProcessing!=null?numberProcessing.isChecked():preferences.getBoolean("numberProcessing",false))
             .putInt("numberMode",numberMode!=null?numberMode.getSelectedItemPosition():preferences.getInt("numberMode",0))
+            .putBoolean("splitCamelCase",splitCamelCase!=null?splitCamelCase.isChecked():preferences.getBoolean("splitCamelCase",true))
             .putBoolean("punctProcessing",punctProcessing!=null?punctProcessing.isChecked():preferences.getBoolean("punctProcessing",false))
             .putInt("punctLevel",punctLevel!=null?punctLevel.getSelectedItemPosition():preferences.getInt("punctLevel",2))
             .apply();

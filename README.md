@@ -1,190 +1,139 @@
-# apple-eloquence-elf
+# Apple Eloquence for Android
 
-Convert Apple's bundled ETI Eloquence TTS engine (Mach-O dylibs from
-the TextToSpeechKona framework) to Linux ELF shared objects, and ship
-them behind a native speech-dispatcher module.
+**Offline Eloquence text-to-speech for Android, with configurable voices, pronunciation dictionaries, and expanded text-processing features.**
 
-> [!IMPORTANT]
-> **AI-assisted development.** Most of this project was implemented in
-> pair-programming sessions with Anthropic's Claude. Every change is
-> human-reviewed and validated through end-to-end speech testing with
-> Orca + speech-dispatcher and container-based install testing on
-> Arch, Debian, Ubuntu, and Fedora — but the implementation work
-> itself is largely AI-generated. The `Co-Authored-By` trailer on
-> each commit makes the split visible. Decide whether you're
-> comfortable with that posture before depending on it.
+Apple Eloquence for Android is an Android application and system Text-to-Speech (TTS) service. It provides a settings interface for selecting languages and voice profiles, adjusting speech output, managing pronunciation dictionaries, and configuring additional text-processing features.
 
-```
-$ ./examples/speak ./prebuilt/x86_64/eci.so "Hello world."
-eciVersion: '6.1.0.0'
-PCM: 27907 samples (2.53s @ 11025Hz), peak amplitude 18103
-Wrote /tmp/eci_out.s16
-$ aplay -r 11025 -f S16_LE /tmp/eci_out.s16
-```
+This project is a feature-enhanced Android integration built on existing open-source work. It adapts the Android application and native speech foundation from ReLoq C and draws on the Apple Eloquence ELF project by Mudb0y for the Apple Eloquence conversion lineage and early Android integration reference. The project maintains its own Android integration and feature additions; it does not claim authorship of the upstream engine or inherited components.
 
-## What this is
+## Project details
 
-Apple ships ETI Eloquence as part of VoiceOver across macOS, iOS,
-iPadOS, and tvOS. Inside `TextToSpeechKonaSupport.framework` they
-bundle dylibs that are the ETI ECI 6.1 engine compiled for Apple
-platforms. The dylibs depend only on `libSystem.B.dylib` and
-`libc++.1.dylib`, which makes them tractable to retarget.
-
-> Eloquence originated at Eloquent Technologies, Inc. (ETI).
-> SpeechWorks acquired ETI in 2000; ScanSoft acquired SpeechWorks in
-> 2003 and renamed itself Nuance Communications in 2005. Nuance spun
-> off its automotive AI division as Cerence in 2019, taking the
-> Eloquence / Vocalizer TTS stacks with it. Microsoft's 2022
-> acquisition of Nuance did not include those TTS engines, so
-> Eloquence's current owner is Cerence, not Microsoft. IBM had its
-> own ECI-licensed fork shipped as ViaVoice / IBMTTS; the mainline
-> engine — including what Apple ships — descends from the ETI tree.
-
-`macho2elf.py` is the converter: a Python + LIEF tool that produces
-ELF `.so` files exposing the standard ECI C API.
-
-## Project status
-
-| Architecture | Status |
+| Item | Details |
 |---|---|
-| x86_64 Linux | ✅ tested end-to-end with sd_eloquence + Orca |
-| aarch64 Linux | ✅ synthesis verified; output is byte-near-identical to x86_64 |
+| Application name | Apple Eloquence |
+| Android package | `org.reloq.tts` |
+| Manifest version | `1.2.2` |
+| Supported ABI | ARM64 (`arm64-v8a`) |
+| Minimum Android version | Android 8.0 (API 26) |
+| Android TTS integration | Selectable system speech engine |
+| Speech operation | Offline after installation and setup |
 
-Shipped binaries are built from the tvOS 18.2 Simulator Runtime, for both
-x86_64 and aarch64. The arm64 converter gaps that previously made synthesis
-segfault are fixed: high8-tagged-pointer rebases, the Apple→AAPCS64 variadic
-ABI bridge, `__chkstk_darwin`, and the libc++ `DT_NEEDED` chain. arm64 output
-synthesizes the same waveform as x86_64 (differences are sub-LSB FP rounding).
+The application currently includes **15 language variants** and **eight voice profiles**. Speech output can be configured from 8 kHz to 48 kHz.
 
-Working languages on x86_64: en-US, en-GB, es-ES, es-MX, fr-FR, fr-CA,
-de-DE, it-IT, pt-BR, fi-FI. CJK (ja-JP, ko-KR, zh-CN, zh-TW) is gated
-for v1 — the romanizer init path needs the modern 2-suffixed ECI API
-rather than the legacy one v1 uses. Deferred to v2; background in
-`docs/cjk-investigation/` and `docs/eci-2-api/`.
+## Features
 
-## Install (from the release tarball)
+### Languages and voices
 
-```bash
-tar -xzf apple-eloquence-elf-*-linux-x86_64.tar.gz
-cd apple-eloquence-elf-*-linux-x86_64
-sudo ./install.sh
-spd-say -o eloquence "Hello from Eloquence."
+The current language catalogue includes:
+
+- Mandarin Chinese — Mainland and Taiwan variants
+- German
+- English — British and American variants
+- Spanish — Castilian and Latin American variants
+- Finnish
+- French — France and Canadian variants
+- Italian
+- Japanese
+- Korean
+- Brazilian Portuguese
+- Greek
+
+Eight voice profiles are available: **Reed, Shelly, Bobby, Rocko, Glen, Sandy, Grandma, and Grandpa**.
+
+### Voice and speech settings
+
+- Choose whether Android or the app controls language and voice.
+- Independent Android speech-rate and pitch controls.
+- Manual speed in words per minute, rate boost, and manual pitch.
+- Exact base-pitch entry in hertz.
+- Voice-model controls for model, head size, roughness, and breathiness.
+- Inflection and voice-volume controls.
+- Seven sample rates: 8, 11.025, 16, 22.05, 32, 44.1, and 48 kHz.
+- Pause behavior, abbreviation expansion, phrase prediction, and optional ECI-tag processing.
+- Original question intonation for supported language profiles.
+- Optional mellow mode at supported output rates.
+
+### Text processing
+
+The Android settings include controls for:
+
+- Speaking emoji by name and compressing repeated emoji names.
+- Number processing with digit, pair, triplet, or quadruplet grouping.
+- Splitting camel-case words.
+- Punctuation processing with None, Some, Most, and All levels.
+- A dedicated regular-expression dictionary settings screen with its own enable switch and dictionary editor.
+
+### Pronunciation dictionaries
+
+The dictionary manager supports Main, Root, and Abbreviations volumes, optional community dictionary data, and user-provided dictionary files. Select a language and volume, import files, change source priority, reload files, or remove files. Later user files take priority over earlier files.
+
+Regular-expression dictionaries are managed separately from the native pronunciation-volume manager.
+
+## Install and use
+
+1. Open the [GitHub Releases page](https://github.com/crucio2211/Apple-Eloquence-for-android./releases).
+2. Download the published ARM64 APK when a release is available.
+3. Install the APK using Android's normal package installer.
+4. Open **Apple Eloquence** and configure the language, voice, and speech settings.
+5. Open Android's Text-to-speech settings and select **Apple Eloquence** as the preferred engine.
+6. Return to the app and use **Read test text** to test speech. Use **Stop** to interrupt the test.
+
+Speech synthesis is designed to operate offline. Internet access is used for online functions such as dictionary updates and checking for application releases.
+
+## App updates
+
+Open **App updates** from the Apple Eloquence settings screen and select **Check for updates**. The app checks this repository's GitHub Releases API for a newer ARM64 APK. When an update is available, it opens the release asset in the browser; the browser and Android's normal installation flow handle the download and installation.
+
+Release APK filenames use this pattern:
+
+`reloq-c-android-arm64-MAJOR.MINOR.PATCH.apk`
+
+The Android release workflow builds and uploads the APK when a matching `vMAJOR.MINOR.PATCH` tag is pushed. The tag must match the app's manifest `versionName`. The installed application uses the public Releases API and does not contain a personal GitHub token.
+
+## Upstream projects and attribution
+
+This project is an independent, feature-enhanced Android integration. It is not an official Apple application and is not affiliated with or endorsed by the upstream authors.
+
+- **[Mudb0y — Apple Eloquence ELF](https://github.com/Mudb0y/Apple-Eloquence-ELF)**: the Apple Eloquence ELF conversion project and its early Android integration scaffold. The project-authored converter code is MIT-licensed. Its license distinguishes that code from extracted or converted Apple binary artifacts, which remain subject to Apple's terms.
+- **[hozosch — ReLoq C](https://github.com/hozosch/Reloq-C)**: the Android application and native pronunciation/acoustic core used as the principal Android integration baseline. This repository's `android/reloq-core` submodule is pinned to upstream commit [`f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a`](https://github.com/hozosch/Reloq-C/commit/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a).
+- **[NVDA-IBMTTS-Driver](https://github.com/davidacm/NVDA-IBMTTS-Driver)** and other upstream projects retain their own attribution and license terms wherever their code or data is used.
+
+The enhancements maintained here include EVDroid-compatible number, emoji, and punctuation processing, camel-case handling, regular-expression dictionary support, and the Android application's integration and update flow. Upstream code remains credited to its respective authors.
+
+## Build and development
+
+Android application source, native integration, resources, tests, and build tooling are under the `android/` directory. The native ReLoq C source is included as a pinned Git submodule.
+
+The automated Android build uses:
+
+- JDK 17
+- Android SDK Platform 35
+- Android Build Tools 35.0.1
+- Android NDK 30.0.16248370
+
+For a local build, initialize the submodule first:
+
+```sh
+git submodule update --init --recursive
+
+python3 android/build.py \
+  --sdk "$ANDROID_HOME" \
+  --ndk "$ANDROID_HOME/ndk/30.0.16248370" \
+  --java-home "$JAVA_HOME" \
+  --verified-dictionaries \
+  --jobs 2 \
+  --output dist/reloq-c-android-arm64-1.2.2.apk
 ```
 
-`install.sh` detects the host distro family (Debian / Ubuntu /
-Fedora / Arch / openSUSE) and uses the system package manager to
-install every runtime dependency (speech-dispatcher, libc++, libsoxr,
-libxml2, pcre2) before dropping files into `/usr/lib/eloquence/`,
-the speech-dispatcher modulebindir, and
-`/etc/speech-dispatcher/modules/eloquence.conf`.
-
-Configure the module by editing
-`/etc/speech-dispatcher/modules/eloquence.conf` and restarting
-speech-dispatcher. Audio previews of every libsoxr resampler preset
-ship at `/usr/share/eloquence/resampler-previews/`.
-
-Uninstall: `sudo ./uninstall.sh` (add `--purge` to also remove the
-conf template).
-
-## Build from source
-
-```bash
-cmake -B build -DCMAKE_INSTALL_PREFIX=/usr
-cmake --build build
-sudo cmake --install build
-```
-
-`cmake --install` does **not** touch the system package manager.
-Install build and runtime deps yourself: `cmake`, `gcc`, `llvm` (for
-`llvm-lipo`), `python3` with the `lief` package, plus dev packages
-for speech-dispatcher, libc++ / libc++abi, libsoxr, libxml2, and
-libpcre2-8. CMake will name any missing ones at configure time.
-
-Files placed:
-- `/usr/bin/macho2elf` — converter CLI
-- `<speechd modulebindir>/sd_eloquence` — module binary
-- `/etc/speech-dispatcher/modules/eloquence.conf` — config template
-- `/usr/share/doc/eloquence/` — README + docs
-
-## Convert your own dylibs
-
-```bash
-python3 -m venv venv && ./venv/bin/pip install lief
-llvm-lipo -extract x86_64 vendor/tvOS-18.2/eci.dylib -output /tmp/eci.x86_64
-./venv/bin/python3 macho2elf/macho2elf.py /tmp/eci.x86_64 -o /tmp/eci.so
-```
-
-Full recipe (including extraction from a tvOS Simulator Runtime DMG):
-`docs/01-extraction.md` and `docs/02-conversion.md`.
-
-## Speech-dispatcher module
-
-`sd_eloquence/` is a native speech-dispatcher output module. It
-exposes the eight Apple voice presets (Reed, Shelley, Sandy, Rocko,
-Flo, Grandma, Grandpa, Eddy; Jacques replaces Reed in French),
-transcribed verbatim from `KonaVoicePresets.plist`. Every supported
-language is selectable on the fly via speech-dispatcher's `language=`
-parameter; no per-language conf edits.
-
-Configuration reference: `docs/03-integration.md` plus the comments
-in `eloquence.conf` itself.
-
-## How it works
-
-The converter walks each section of the Mach-O dylib, emits an
-assembly stub that interleaves `.incbin` of the original code/data
-with section-relative labels for exports and `.quad` references for
-chained-fixup bindings, generates a linker script that pins each
-section at its original Mach-O virtual address (preserving
-RIP-relative offsets), and runs `gcc -shared`. Symbol prefixes are
-stripped (`_atoi` → `atoi`), Darwin-specific symbols are renamed
-(`___error` → `__errno_location`, `___stderrp` → `stderr`), and
-small stub C functions cover names with no direct Linux equivalent
-(`__maskrune`, `__stack_chk_guard`, `_DefaultRuneLocale`).
-
-Details: `docs/04-internals.md`.
-
-## Repo layout
-
-```
-macho2elf/macho2elf.py    Python + LIEF converter (MIT)
-sd_eloquence/             speech-dispatcher module (GPL-2.0-or-later)
-vendor/tvOS-18.2/         Unmodified Apple Mach-O dylibs
-prebuilt/{x86_64,aarch64} Converted ELFs (gitignored)
-examples/                 dlopen-based TTS sample (speak.c)
-dist/                     install.sh / uninstall.sh / smoke.sh
-tools/                    Converter audit + checksum tooling
-docs/                     Extraction / conversion / integration / internals / troubleshooting
-.github/workflows/        CI: convert vendor/ -> ELFs, package tarballs
-```
+See [Android implementation and build notes](android/README.md) for the source layout, build requirements, test commands, and release workflow.
 
 ## Licensing
 
-- **`macho2elf/`** is MIT. See `LICENSE`.
-- **`sd_eloquence/`** is GPL-2.0-or-later. It incorporates anti-crash
-  regex tables and dictionary-loading patterns from the
-  [NVDA-IBMTTS-Driver](https://github.com/davidacm/NVDA-IBMTTS-Driver)
-  (Copyright (C) 2009-2026 David CM, GPL-2.0). Full text in
-  `sd_eloquence/LICENSE.GPL`.
-- **`vendor/tvOS-18.2/`** are unmodified Apple binaries from the tvOS
-  18.2 Simulator Runtime IPSW, subject to Apple's SDK terms. SHA256
-  checksums in `tools/checksums.txt`.
-- **Converted `.so` files** are derivative works of Apple's
-  distribution. Not committed; built locally or downloaded from the
-  release tarball.
+Licensing is component-specific. The root MIT license does **not** replace the licenses of inherited or bundled components.
 
-To redistribute or productize, the conservative path is to download
-your own tvOS Simulator Runtime from Apple's developer portal and
-convert locally; see `docs/01-extraction.md`.
+- The project-authored Apple Eloquence ELF converter and related files are covered by the root MIT license, subject to its explicit binary-artifact and third-party notices.
+- The Android integration incorporates ReLoq C code, licensed under GPL-3.0-or-later. See the pinned upstream [LICENSE](https://github.com/hozosch/Reloq-C/blob/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a/LICENSE) and [NOTICE](https://github.com/hozosch/Reloq-C/blob/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a/NOTICE).
+- The Apple Eloquence binary artifacts retain the restrictions and terms described in the upstream Apple Eloquence ELF license and notices.
+- Separately licensed third-party code and data retain their own license terms.
 
-## Acknowledgements
-
-- ETI / SpeechWorks / ScanSoft / Nuance / Cerence — successive
-  custodians of the engine.
-- IBM ViaVoice TTS / IBMTTS, whose contributions to the mainline ECI
-  codebase persist in this build.
-- LevelStar, for keeping a working Linux ECI distribution alive in
-  their Icon product; their `eci.ini` informed our minimal template.
-- Agner Fog (`objconv`) and the LIEF project, for the binary-format
-  tooling that made this tractable.
-- Anthropic's Claude Code did most of the engineering pair-programming.
+Preserve the applicable upstream license files, copyright notices, and third-party notices when modifying or distributing the application.

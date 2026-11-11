@@ -5,7 +5,8 @@ import java.util.regex.*;
 
 /** Public release metadata validation; no package installer or speech-worker state. */
 final class UpdateData {
-    static final String RELEASES="https://api.github.com/repos/hozosch/Reloq-C/releases?per_page=30";
+    static final String REPOSITORY="crucio2211/Apple-Eloquence-for-android.";
+    static final String RELEASES="https://api.github.com/repos/"+REPOSITORY+"/releases?per_page=30";
     static final long LIMIT=128L*1024*1024;
     private static final Pattern NAME=Pattern.compile("reloq-c-android-arm64-((\\d+)\\.(\\d+)\\.(\\d+))\\.apk");
     static final class Package {
@@ -27,8 +28,9 @@ final class UpdateData {
         URI uri=URI.create(url);
         if(!"https".equals(uri.getScheme())||!"github.com".equals(uri.getRawAuthority())||
             uri.getQuery()!=null||uri.getFragment()!=null||
-            !uri.getRawPath().matches("/hozosch/Reloq-C/releases/download/[A-Za-z0-9][A-Za-z0-9._-]*/"+
-                Pattern.quote(name)))throw new IllegalArgumentException("Invalid package URL");
+            !uri.getRawPath().matches(Pattern.quote("/"+REPOSITORY+"/releases/download/")+
+                "[A-Za-z0-9][A-Za-z0-9._-]*/"+Pattern.quote(name)))
+            throw new IllegalArgumentException("Invalid package URL");
         if(size<1||size>LIMIT||digest==null||!digest.matches("sha256:[0-9a-fA-F]{64}"))
             throw new IllegalArgumentException("Invalid package size or SHA-256 checksum");
         return new Package(name,m.group(1),url,digest.substring(7).toLowerCase(java.util.Locale.ROOT),code,size);

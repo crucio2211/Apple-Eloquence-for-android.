@@ -4,7 +4,7 @@ import re
 
 
 def generate(destination):
-    root=Path(__file__).resolve().parents[1]
+    root=Path(__file__).resolve().parent/"reloq-core"
     target=Path(destination)/"org/reloq/tts"
     target.mkdir(parents=True,exist_ok=True)
     source=(root/"src/reloq_voice_controls.c").read_text()

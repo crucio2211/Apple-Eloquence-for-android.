@@ -5,7 +5,7 @@ import java.util.regex.*;
 
 /** Public release metadata validation; no package installer or speech-worker state. */
 final class UpdateData {
-    static final String REPOSITORY="crucio2211/Apple-Eloquence-ELF";
+    static final String REPOSITORY="crucio2211/Apple-Eloquence-for-android.";
     static final String RELEASES="https://api.github.com/repos/"+REPOSITORY+"/releases?per_page=30";
     static final long LIMIT=128L*1024*1024;
     private static final Pattern NAME=Pattern.compile("reloq-c-android-arm64-((\\d+)\\.(\\d+)\\.(\\d+))\\.apk");

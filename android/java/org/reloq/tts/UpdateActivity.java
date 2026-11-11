@@ -43,7 +43,7 @@ public final class UpdateActivity extends Activity {
     private static long code(PackageInfo info) {return Build.VERSION.SDK_INT>=28?info.getLongVersionCode():info.versionCode;}
     private URLConnection connection(String address) throws IOException {
         URLConnection c=new URL(address).openConnection();c.setConnectTimeout(15000);c.setReadTimeout(15000);
-        c.setRequestProperty("User-Agent","ReLoq-C-updater");return c;
+        c.setRequestProperty("User-Agent","Apple-Eloquence-Android-updater");return c;
     }
     private UpdateData.Package check() throws Exception {
         ByteArrayOutputStream bytes=new ByteArrayOutputStream();

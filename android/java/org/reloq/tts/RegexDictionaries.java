@@ -45,7 +45,7 @@ final class RegexDictionaries {
     out.write((p+"\t"+r+"\n").getBytes(StandardCharsets.UTF_8));}return true;
   }catch(Exception e){System.err.println("ReLoq: "+"Cannot append regex entry"); e.printStackTrace();return false;}
  }
- static boolean replace(File f,int index,String pattern,String replacement,boolean matchCase){return rewrite(f,index,prepare(pattern,replacement,matchCase));}
+ static boolean replace(File f,int index,String pattern,String replacement,boolean matchCase){String line=prepare(pattern,replacement,matchCase);return line!=null&&rewrite(f,index,line);}
  static boolean remove(File f,int index){return rewrite(f,index,null);}
  private static String prepare(String p,String r,boolean matchCase){
   p=p==null?"":p.trim();r=r==null?"":r.trim();if(p.isEmpty()||r.isEmpty())return null;

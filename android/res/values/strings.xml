@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_updates">App updates</string>
+    <string name="check_updates">Check for updates</string>
+    <string name="checking_updates">Checking for updates…</string>
+    <string name="installed_version">Installed version: %1$s</string>
+    <string name="version_available">Version %1$s is available.</string>
+    <string name="no_published_update">No newer published app package is available.</string>
+    <string name="download_update">Open download in browser</string>
+    <string name="update_failed">Update failed: %1$s</string>
+    <string name="browser_update">Download opened. Use your browser and Android’s normal installation flow. Keep Play Protect enabled.</string>
+    <string name="app_name">ReLoq C</string>
+    <string name="engine_help">Offline speech synthesis. Choose a language and voice to test, or select ReLoq C in Android text-to-speech settings.</string>
+    <string name="language">Language</string>
+    <string name="profile">Voice</string>
+    <string name="sample_rate">Sample rate</string>
+    <string name="pause_mode">Shorten pauses</string>
+    <string name="sample_text">Text to read</string>
+    <string name="speak">Read test text</string>
+    <string name="stop">Stop</string>
+    <string name="system_settings">Android speech settings</string>
+    <string name="initializing">Initializing speech engine</string>
+    <string name="ready">Speech engine ready</string>
+    <string name="unavailable">Speech engine unavailable. Open Android speech settings and select ReLoq C.</string>
+    <string-array name="pause_modes">
+        <item>Never</item>
+        <item>At the end</item>
+        <item>Always</item>
+    </string-array>
+    <string name="voice_settings">Language and voice</string>
+    <string name="android_voice">Control language and voice through Android</string>
+    <string name="android_rate">Control speed through Android</string>
+    <string name="android_pitch">Control pitch through Android</string>
+    <string name="speed">Manual speed, words per minute</string>
+    <string name="pitch">Manual pitch</string>
+    <string name="rate_boost">Rate boost</string>
+    <string name="inflection">Inflection</string>
+    <string name="volume">Voice volume</string>
+    <string name="anatomy">Voice model</string>
+    <string name="model">Model</string>
+    <string name="head_size">Head size</string>
+    <string name="roughness">Roughness</string>
+    <string name="breathiness">Breathiness</string>
+    <string name="reset_profile">Reset selected voice profile</string>
+    <string name="output_settings">Speech output</string>
+    <string name="eci_tags">Process ECI tags</string>
+    <string name="dictionaries">Pronunciation dictionaries</string>
+    <string name="community_dictionaries">Use community dictionaries</string>
+    <string name="update_dictionaries">Update community dictionaries from current master</string>
+    <string name="own_dictionaries">Own dictionary files, later files take priority</string>
+    <string name="dictionary_language">Language for new dictionary files</string>
+    <string name="dictionary_volume">Volume for new dictionary files</string>
+    <string name="add_dictionary">Add dictionary file</string>
+    <string name="remove_dictionary">Remove selected file</string>
+    <string name="move_dictionary_up">Move selected file earlier</string>
+    <string name="move_dictionary_down">Move selected file later</string>
+    <string name="reload_dictionaries">Reload selected files</string>
+    <string name="dictionary_help">Community and own Dic entries use the native dictionary stages. Choose the language and volume before adding a file. Files use Windows-1252 encoding. Later files override earlier entries. Changes are monitored when the document provider supplies change metadata; Reload selected files always rereads the sources. The selected online source is downloaded when first needed or when updated. Activated dictionaries are copied to device-protected storage so they can be used after a restart before the first unlock.</string>
+    <string name="dictionary_working">Preparing dictionaries</string>
+    <string name="dictionary_ready">Dictionaries ready</string>
+    <string name="dictionary_error">Dictionary update failed: %1$s</string>
+    <string name="dictionary_unavailable">Dictionary unavailable</string>
+    <string name="dictionary_permission">Choose a file that allows permanent read access</string>
+    <string name="back">Back to speech settings</string>
+    <string name="test_speech">Speech test</string>
+    <string name="parameter_value">%1$s: %2$d</string>
+    <string-array name="models">
+        <item>Male</item>
+        <item>Female</item>
+    </string-array>
+    <string-array name="dictionary_volumes">
+        <item>Main</item>
+        <item>Root</item>
+        <item>Abbreviations</item>
+    </string-array>
+    <string name="wpm_value">%1$d words per minute</string>
+    <string name="speed_help">Words per minute are approximate; the actual rate depends on the language, word lengths and pauses. Android normal speed uses a target of 190 words per minute.</string>
+    <string name="abbreviation_dictionary">Use abbreviation dictionary</string>
+    <string name="phrase_prediction">Phrase prediction</string>
+    <string name="dictionary_repository">Dictionary source</string>
+    <string-array name="dictionary_repositories"><item>IBM TTS Dictionaries</item><item>Alternative IBM TTS Dictionaries</item></string-array>
+    <string name="dictionary_update_title">Pronunciation dictionaries</string>
+    <string name="dictionary_update_new">Dictionary update complete. New entries: %1$d</string>
+    <string name="dictionary_update_first">Dictionary loaded for the first time. Entries: %1$d</string>
+    <string name="dictionary_update_unknown">Dictionary update complete. The number of new entries could not be determined.</string>
+    <string name="dictionary_update_files_new">New dictionary files: %1$d</string>
+    <string name="dictionary_update_files_total">Dictionary files in total: %1$d</string>
+    <string name="dictionary_update_files_unknown">The number of new dictionary files could not be determined.</string>
+    <string name="original_questions">Use original question intonation</string>
+    <string name="mellow_mode">Mellow mode (16 kHz and above)</string>
+    <string name="pitch_hz_mode">Use pitch in hertz</string>
+    <string name="pitch_hz_value">Base pitch in hertz</string>
+    <string name="pitch_hz_error">Enter a value from 1 to 24000 Hz.</string>
+</resources>

@@ -1,36 +1,31 @@
-# Android APK build for apple-eloquence-elf (fork-friendly)
-#
-# Builds the experimental Android TTS engine APK on GitHub Actions:
-#   1. fetch the proven engine .so files into android jniLibs
-#   2. build libsoxr with the NDK (high-quality upsampler)
-#   3. build APK with Gradle (no wrapper in repo, so we install Gradle 8.9)
-# The APK is signed with the stable test key in elo-debug.keystore
-# (test key only — never use for real releases), so updates install cleanly.
-#
-# Trigger:
-#   - manual workflow_dispatch (gamitin mo ito sa fork mo)
-#   - push sa main/master na humihipo sa android/, macho2elf/, vendor/, o sa file na ito
-
-name: Android
+name: Android APK
 
 on:
-  workflow_dispatch:
   push:
-    branches: [main, master]
+    branches: [main]
     paths:
       - 'android/**'
-      - 'macho2elf/**'
-      - 'vendor/**'
+      - '.gitmodules'
       - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    name: Build Android ARM64 APK
     runs-on: ubuntu-24.04
-    env:
-      NDK_VERSION: 27.2.12479018
-      ANDROID_API: 34
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository and pinned Android core
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -38,95 +33,44 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Use preinstalled Android SDK + install NDK
-        run: |
-          export ANDROID_HOME=/usr/local/lib/android/sdk
-          export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
-          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
-          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
-          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
-            "platforms;android-34" \
-            "build-tools;34.0.0" \
-            "ndk;27.2.12479018" \
-            "cmake;3.22.1" \
-            "platform-tools"
-          echo "ANDROID_NDK=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
-          ls -la "$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/" | head -20
+      - name: Set up Android SDK and install NDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
 
-      - name: Install build deps
+      - name: Install Android API, build tools, and NDK
         run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip wget ninja-build curl cmake
+          sdkmanager 'platforms;android-35' 'build-tools;35.0.1' 'ndk;30.0.16248370'
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> "$GITHUB_ENV"
 
-      - name: Fetch proven engine libs
-        # Known-good converted Apple tvOS libs (verified speaking on real
-        # devices). The JNI bridge itself (libeloquence_jni.so) is still
-        # built from source by Gradle below.
+      - name: Test EVDroid number, emoji, and punctuation processing
         run: |
-          OUT=android/app/src/main/jniLibs/arm64-v8a
-          mkdir -p "$OUT"
-          BASE=https://raw.githubusercontent.com/GGbond2007/eloquence-tts-android/main/native-libs/arm64-v8a
-          for n in eci enu eng esp esm fra frc deu ita ptb fin chs cht jpn kor \
-                   chsrom chtrom jpnrom korrom; do
-            curl -fsSL -o "$OUT/lib${n}.so" "$BASE/lib${n}.so"
-            echo "fetched lib${n}.so"
-          done
-          curl -fsSL -o "$OUT/libc++_shared.so" "$BASE/libc++_shared.so"
-          echo "fetched libc++_shared.so"
+          mkdir -p build/text-processing-test
+          javac -encoding UTF-8 -d build/text-processing-test \
+            android/java/org/reloq/tts/EmojiNames.java \
+            android/java/org/reloq/tts/EmojiProcessing.java \
+            android/java/org/reloq/tts/NumberProcessing.java \
+            android/java/org/reloq/tts/PunctSymbols.java \
+            android/java/org/reloq/tts/PunctuationProcessing.java \
+            android/java/org/reloq/tts/TextPipeline.java \
+            android/test/TextProcessingTest.java
+          java -cp build/text-processing-test org.reloq.tts.TextProcessingTest
 
-      - name: Build libsoxr (NDK, for high-quality upsampling)
-        # libsoxr renders the 11025 Hz engine output at 48000 Hz when the
-        # "higher sampling rate" checkbox is on. Built from source with
-        # the NDK toolchain; staged next to the engine libs.
+      - name: Build and verify signed APK
         run: |
-          export ANDROID_NDK="$ANDROID_HOME/ndk/27.2.12479018"
-          git clone --depth 1 --branch 0.1.3 https://github.com/chirlu/soxr.git soxr
-          cmake -S soxr -B soxr-build \
-            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK/build/cmake/android.toolchain.cmake" \
-            -DANDROID_ABI=arm64-v8a \
-            -DANDROID_PLATFORM=android-24 \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_SHARED_LIBS=ON \
-            -DBUILD_TESTS=OFF \
-            -DBUILD_EXAMPLES=OFF \
-            -DWITH_OPENMP=OFF
-          cmake --build soxr-build -j"$(nproc)"
-          ls -la soxr-build/src/libsoxr.so*
-          cp soxr-build/src/libsoxr.so \
-            android/app/src/main/jniLibs/arm64-v8a/libsoxr.so
-          echo "SOXR_INC=$PWD/soxr/src" >> "$GITHUB_ENV"
-          echo "--- staged jniLibs ---"
-          ls -lh android/app/src/main/jniLibs/arm64-v8a/
+          python3 android/build.py \
+            --sdk "$ANDROID_HOME" \
+            --ndk "$ANDROID_HOME/ndk/30.0.16248370" \
+            --java-home "$JAVA_HOME" \
+            --verified-dictionaries \
+            --jobs 2 \
+            --output dist/reloq-c-android-arm64.apk
 
-      - name: Install stable test key
-        run: |
-          mkdir -p ~/.android
-          cp elo-debug.keystore ~/.android/debug.keystore
-          chmod 600 ~/.android/debug.keystore
-
-      - name: Install Gradle 8.9
-        run: |
-          cd /tmp
-          wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip
-          unzip -q gradle-8.9-bin.zip
-          echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
-          /tmp/gradle-8.9/bin/gradle --version
-
-      - name: Build debug APK
-        working-directory: android
-        run: |
-          export ANDROID_NDK="$ANDROID_HOME/ndk/27.2.12479018"
-          gradle assembleDebug --stacktrace --info
-          echo "--- outputs ---"
-          find app/build/outputs -type f | head -20
-          ls -lh app/build/outputs/apk/debug/
-
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: eloquence-tts-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: apple-eloquence-android-arm64
+          path: dist/reloq-c-android-arm64.apk
+          compression-level: 0
           retention-days: 14

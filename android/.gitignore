@@ -1,9 +1,0 @@
-# SPDX-License-Identifier: MIT
-# Android build artifacts and machine-local config.
-.gradle/
-build/
-app/build/
-app/.cxx/
-local.properties
-*.iml
-.idea/

@@ -1,93 +1,60 @@
-# Apple Eloquence — Android TTS engine (experimental scaffold)
+# Apple Eloquence ELF — Android implementation
 
-A buildable skeleton that exposes the converted Eloquence engine as an Android
-`TextToSpeechService`, so it shows up in **Settings → Accessibility →
-Text-to-speech** alongside Google's engine.
+The Android app implementation in this directory is based on the uploaded
+ReLoq-C Android 1.2.2 source snapshot (upstream commit
+`f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a`). The previous experimental
+Apple-ELF Android scaffold has been replaced by this implementation.
 
-> **Status:** the native + converter path is validated (all 19 modules link
-> against Bionic/NDK-libc++ with zero unresolved symbols; the JNI shim compiles
-> clean with NDK r27c). The end-to-end app has **not yet been run on a device or
-> emulator** — that's the next milestone. Treat this as a starting point.
+## Source layout
 
-## Layout
+- `java/org/reloq/tts/`: Android TextToSpeech service, settings, dictionaries,
+  update handling, and text preprocessing.
+- `native/reloq_jni.c`: native ECI bridge.
+- `res/`: Android engine resources and translations.
+- `test/`: Java/Python checks.
+- `release-signing.p12`: the upstream included test signing identity.
+- `reloq-core/`: Git submodule pinned to the matching ReLoq-C source snapshot.
+  It supplies the native ECI engine, OpenEVV rule library, dictionaries, and
+  source-build dependencies. It is kept under this Android directory so the
+  Apple ELF desktop sources remain independent.
 
-```
-android/
-  jni/eloquence_jni.c        Native bridge: dlopen eci.so, run ECI, return PCM
-  jni/CMakeLists.txt         Builds libeloquence_jni.so (+ optional CJK atexit fix)
-  stage-libs.sh              Convert vendor dylibs -> jniLibs/arm64-v8a/lib*.so
-  app/
-    build.gradle.kts         AGP/Kotlin/NDK config (arm64-v8a)
-    src/main/
-      AndroidManifest.xml    Declares the TTS_SERVICE
-      java/.../EloquenceNative.kt        JNI declarations
-      java/.../EloquenceTtsService.kt    The TextToSpeechService
-      res/xml/tts_engine.xml             Engine descriptor
-      jniLibs/arm64-v8a/                 Staged engine .so files (gitignored)
-```
+## EVDroid text-processing integration
 
-## How it fits together
+The Android request path now applies the same processing order and setting
+semantics used by EVDroid:
 
-1. **Convert + stage.** `stage-libs.sh` runs `macho2elf.py --os android` for each
-   vendored dylib and drops the results into `jniLibs/arm64-v8a/` as
-   `lib<name>.so`, plus the NDK's `libc++_shared.so`. Gradle installs everything
-   under `jniLibs/` into the app's **read-only `nativeLibraryDir`** — the one
-   place modern Android lets you `dlopen` executable code (writable app storage
-   is blocked by W^X / SELinux).
-2. **JNI bridge.** `libeloquence_jni.so` `dlopen`s `libeci.so`, resolves the ECI
-   C API, and synthesizes to 11025 Hz mono S16 PCM via an ECI callback.
-3. **Service.** `EloquenceTtsService` generates `eci.ini` at runtime (absolute
-   `Path=` into `nativeLibraryDir`), maps Android locales to ECI dialects, and
-   feeds PCM to the platform `SynthesisCallback`.
+1. Remove thousands-separator commas.
+2. Expand emoji to their English names when enabled, using the complete
+   EVDroid emoji table including Unicode Emoji 18.0 additions.
+3. Compress consecutive repetitions of the same emoji name at a selectable
+   threshold from 2 through 5.
+4. Regroup digit runs in digits, pairs, triplets, or quadruplets mode when
+   number processing is enabled.
+5. Speak punctuation according to the SAPI5-derived symbol table and selected
+   punctuation level.
+
+The Text processing section in Android settings exposes the emoji switch,
+compression threshold, number-processing switch and grouping mode, and
+punctuation switch and level. Preferences persist in the app's existing
+`settings` SharedPreferences file.
 
 ## Build
 
-```bash
-# 1. Convert + stage the engine libraries (needs the venv with lief + the NDK).
-export ANDROID_NDK=/path/to/android-ndk-r27c
-PATH="/path/to/venv/bin:$PATH" ./android/stage-libs.sh 24
+The GitHub Actions Android workflow checks out the pinned submodule and builds
+a signed ARM64 APK with JDK 17, Android API 35, and NDK 30.0.16248370.
 
-# 2. Build the APK (Android SDK + the same NDK).
-cd android
-./gradlew assembleDebug        # or open in Android Studio
+For a local build, initialize the submodule first:
+
+```sh
+git submodule update --init --recursive
+python3 android/build.py \
+  --sdk "$ANDROID_HOME" \
+  --ndk "$ANDROID_HOME/ndk/30.0.16248370" \
+  --java-home "$JAVA_HOME" \
+  --verified-dictionaries \
+  --jobs 2 \
+  --output dist/reloq-c-android-arm64.apk
 ```
 
-The NDK version in `app/build.gradle.kts` (`ndkVersion`) must use `std::__ndk1`
-libc++ — **r27** does. If you bump the NDK and the libc++ inline namespace
-changes, update the `St3__1 -> St6__ndk1` rewrite in `macho2elf.py`
-(`rename_import`) accordingly.
-
-## Install & test (emulator or device)
-
-Use an **arm64-v8a** Android image (the engine is arm64-only today):
-
-```bash
-adb install android/app/build/outputs/apk/debug/app-debug.apk
-# Then: Settings -> Accessibility -> Text-to-speech -> pick "Apple Eloquence",
-# or drive it directly:
-adb shell am start -a android.intent.action.VIEW   # (your own test activity), or
-adb shell settings put secure tts_default_synth com.eloquence.tts
-```
-
-A quick way to hear it without a UI is the `TextToSpeech` API from a tiny test
-activity, or `adb shell` an app that calls `speak()`.
-
-## Known gaps / next steps
-
-- **Engine validated on Bionic (arm64).** The converted arm64 engine has been
-  run under a real Bionic `linker64` (via qemu-user) and synthesizes audio
-  byte-near-identical to the Linux build. The full APK installs on an x86_64
-  Android 14 emulator and registers as a selectable system TTS engine.
-- **`android-x86_64` is experimental and currently crashes at runtime.** The
-  x86_64 build is symbol-complete and `eciVersion` works, but `eciNew` hits an
-  uninitialised engine object (NULL function-pointer call) — uniquely on the
-  x86_64+Bionic combination (arm64+Bionic and x86_64+glibc both work). Root
-  cause not yet pinned; debugging it in Android Studio (GUI lldb, symbol
-  handling) is the most efficient path. Until then the APK ships **arm64-v8a
-  only**, so test on an arm64 device/emulator.
-- **Streaming.** `nativeSynthesize` buffers the whole utterance; for long text,
-  switch to chunked delivery (the ECI callback already arrives in chunks).
-- **Voice/prosody mapping** is approximate (`onSynthesizeText`); tune against the
-  IBM ECI ranges.
-- **CJK** needs `Path_Rom=` (handled) and the `__cxa_atexit` override (bundled
-  via `CMakeLists.txt`, which makes `libeloquence_jni.so` GPL-2.0-or-later).
+The included P12 is the upstream test signing key. It is not a production
+release identity.

@@ -34,7 +34,7 @@ public final class RegexDictionaryActivity extends Activity {
  private Button button(String label){Button b=new Button(this);b.setText(label);content.addView(b);return b;}
  private void refreshEntries(){
   // Rebuild after the three permanent controls.
-  while(content.getChildCount()>5)content.removeViewAt(5);
+  while(content.getChildCount()>6)content.removeViewAt(6);
   if(!file.isFile())return;
   List<RegexDictionaries.RawEntry> entries=RegexDictionaries.readEntries(file);
   TextView heading=new TextView(this);heading.setText("Entries: "+entries.size());heading.setTextSize(18);content.addView(heading);

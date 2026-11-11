@@ -44,7 +44,7 @@ jobs:
           sdkmanager 'platforms;android-35' 'build-tools;35.0.1' 'ndk;30.0.16248370'
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> "$GITHUB_ENV"
 
-      - name: Test EVDroid number, emoji, and punctuation processing
+      - name: Test EVDroid number, emoji, camel-case, regex, and punctuation processing
         run: |
           mkdir -p build/text-processing-test
           javac -encoding UTF-8 -d build/text-processing-test \
@@ -53,6 +53,8 @@ jobs:
             android/java/org/reloq/tts/NumberProcessing.java \
             android/java/org/reloq/tts/PunctSymbols.java \
             android/java/org/reloq/tts/PunctuationProcessing.java \
+            android/java/org/reloq/tts/CamelCase.java \
+            android/java/org/reloq/tts/RegexDictionaries.java \
             android/java/org/reloq/tts/TextPipeline.java \
             android/test/TextProcessingTest.java
           java -cp build/text-processing-test org.reloq.tts.TextProcessingTest

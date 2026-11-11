@@ -24,6 +24,11 @@ public final class TextProcessingTest {
         eq("meteor",EmojiProcessing.apply(emoji(0x1FA8B),3),"Emoji 18 meteor");
         eq("eraser",EmojiProcessing.apply(emoji(0x1FA8C),3),"Emoji 18 eraser");
         eq("net with handle",EmojiProcessing.apply(emoji(0x1FA8D),3),"Emoji 18 net");
+        eq("user at example.com",SymbolWords.apply("user@example.com"),"at sign expands to at");
+        eq("at home",SymbolWords.apply("@home"),"leading at sign");
+        eq("mail me at a at b",SymbolWords.apply("mail me@a@b"),"multiple at signs");
+        eq("example.com",SymbolWords.apply("example.com"),"other symbols untouched");
+        eq("a+b",SymbolWords.apply("a+b"),"plus untouched");
         eq("Hello comma "+(char)96+"p1 world",PunctuationProcessing.apply("Hello, world",PunctuationProcessing.ALL),"comma punctuation");
         eq("Hello!",PunctuationProcessing.apply("Hello!",PunctuationProcessing.MOST),"sentence prosody");
         eq("",PunctuationProcessing.apply(". .",PunctuationProcessing.SOME),"isolated dots in Some");
@@ -39,6 +44,8 @@ public final class TextProcessingTest {
             regexFile.delete();
         } catch(java.io.IOException error) { throw new AssertionError(error); }
         eq("1000",TextPipeline.process("1,000",false,3,false,0,false,false,2),"pipeline comma pass");
-        System.out.println("Android text processing checks passed (Emoji 18.0, compression, numbers, camel case, regex, punctuation).");
+        eq("user at example.com",TextPipeline.process("user@example.com",false,3,false,0,false,false,2),"at sign when punctuation is off");
+        eq("user at example.com",TextPipeline.process("user@example.com",false,3,false,0,false,true,2),"at sign when punctuation is on");
+        System.out.println("Android text processing checks passed (Emoji 18.0, compression, numbers, camel case, regex, symbol words, punctuation).");
     }
 }

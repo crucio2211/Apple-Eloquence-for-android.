@@ -1,6 +1,34 @@
 # Apple Eloquence ELF — Android implementation
 
-The Android app implementation in this directory is based on the uploaded
+## Upstream sources and attribution
+
+This Android implementation is a feature-enhanced adaptation of existing
+open-source work. It is not a claim of independently reimplementing the
+underlying ECI engine or all of the Android application code.
+
+- **[Mudb0y/Apple-Eloquence-ELF](https://github.com/Mudb0y/Apple-Eloquence-ELF)**:
+  the Apple Eloquence ELF conversion project and the early Android integration
+  scaffold that informed this repository's Apple-Eloquence-ELF lineage.
+  Its project-authored converter code is MIT-licensed. Its notice expressly
+  distinguishes Apple's extracted/converted binary artifacts, which remain
+  subject to Apple's own terms.
+- **[hozosch/ReLoq-C](https://github.com/hozosch/Reloq-C)**:
+  the Android application and native pronunciation/acoustic core used for
+  this implementation. The `reloq-core` submodule is pinned to commit
+  [`f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a`](https://github.com/hozosch/Reloq-C/commit/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a).
+  ReLoq C's original code is GPL-3.0-or-later; see its upstream
+  [LICENSE](https://github.com/hozosch/Reloq-C/blob/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a/LICENSE)
+  and [NOTICE](https://github.com/hozosch/Reloq-C/blob/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a/NOTICE)
+  for the terms and separately licensed components.
+
+The enhancements maintained in this repository include EVDroid-compatible
+number/emoji/punctuation processing, camel-case handling, regular-expression
+dictionary support, and the Apple Eloquence Android app integration and update
+flow. The inherited upstream code remains credited to its respective authors;
+these projects are not presented as endorsing this repository.
+
+
+The Android app implementation in this directory adapts the public
 ReLoq-C Android 1.2.2 source snapshot (upstream commit
 `f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a`). The previous experimental
 Apple-ELF Android scaffold has been replaced by this implementation.
@@ -51,6 +79,9 @@ this repository and whose GitHub asset metadata includes a SHA-256 digest.
 It compares the semantic version with the installed Android `versionCode`.
 When a newer package is found, it opens the GitHub asset in the browser; the
 user completes the download and Android's normal installation flow.
+
+When a new package is published, it will appear on the
+[Apple Eloquence GitHub Releases page](https://github.com/crucio2211/Apple-Eloquence-ELF/releases).
 
 To publish an Android update:
 

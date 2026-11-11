@@ -43,6 +43,37 @@ platforms. The dylibs depend only on `libSystem.B.dylib` and
 `macho2elf.py` is the converter: a Python + LIEF tool that produces
 ELF `.so` files exposing the standard ECI C API.
 
+
+## Android integration and upstream projects
+
+The Android application in `android/` is a **feature-enhanced integration built
+on existing upstream work**, not a claim that the underlying engine, converter,
+or ReLoq C core originated in this repository.
+
+This project draws on two principal upstream projects:
+
+- **[Apple Eloquence ELF by Mudb0y](https://github.com/Mudb0y/Apple-Eloquence-ELF)** —
+  the Apple Eloquence ELF conversion project and its early Android integration
+  reference. This repository continues that Apple Eloquence ELF lineage and
+  adapts it for the Android application.
+- **[ReLoq C by hozosch](https://github.com/hozosch/Reloq-C)** —
+  the Android application and pronunciation/acoustic core used as the main
+  integration baseline. The `android/reloq-core` submodule is pinned to
+  upstream commit
+  [`f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a`](https://github.com/hozosch/Reloq-C/commit/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a).
+
+The work maintained here extends those foundations with Android-side
+integration and additional features, including EVDroid-compatible text
+processing, number grouping, emoji handling, punctuation controls, camel-case
+processing, regular-expression dictionary support, and the app's update
+integration. See [the Android implementation notes](android/README.md) for
+the component-level details.
+
+These links are source attribution, not a claim of official affiliation,
+endorsement, or ownership of the upstream projects. Changes specific to this
+repository should be distinguished from code and components inherited from
+those projects.
+
 ## Project status
 
 | Architecture | Status |
@@ -166,6 +197,14 @@ docs/                     Extraction / conversion / integration / internals / tr
   [NVDA-IBMTTS-Driver](https://github.com/davidacm/NVDA-IBMTTS-Driver)
   (Copyright (C) 2009-2026 David CM, GPL-2.0). Full text in
   `sd_eloquence/LICENSE.GPL`.
+- **`android/`** contains an Android integration derived in part from
+  [ReLoq C](https://github.com/hozosch/Reloq-C), whose original code is
+  GPL-3.0-or-later. See the upstream
+  [LICENSE](https://github.com/hozosch/Reloq-C/blob/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a/LICENSE)
+  and [NOTICE](https://github.com/hozosch/Reloq-C/blob/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a/NOTICE);
+  the pinned source submodule also retains separately licensed third-party
+  notices. The Android integration must preserve the applicable GPL and
+  third-party terms; the root MIT notice does not relicense those components.
 - **`vendor/tvOS-18.2/`** are unmodified Apple binaries from the tvOS
   18.2 Simulator Runtime IPSW, subject to Apple's SDK terms. SHA256
   checksums in `tools/checksums.txt`.

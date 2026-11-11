@@ -80,15 +80,13 @@ Regular-expression dictionaries are managed separately from the native pronuncia
 
 Speech synthesis is designed to operate offline. Internet access is used for online functions such as dictionary updates and checking for application releases.
 
-## App updates
+## App updates and build downloads
 
-Open **App updates** from the Apple Eloquence settings screen and select **Check for updates**. The app checks this repository's GitHub Releases API for a newer ARM64 APK. When an update is available, it opens the release asset in the browser; the browser and Android's normal installation flow handle the download and installation.
+Every successful Android APK build from the `main` branch (including a manual workflow run started on `main`) uploads the APK as a GitHub Actions artifact retained for 14 days and creates or updates the rolling [`android-main` prerelease](https://github.com/crucio2211/Apple-Eloquence-for-android./releases/tag/android-main). The rolling prerelease always contains the latest successful main-branch APK and is intended for testing.
 
-Release APK filenames use this pattern:
+The in-app **App updates** checker ignores prereleases, so this continuous test build is not offered as a normal stable update. Pull-request builds and diagnostic/test artifacts remain in GitHub Actions and are not published as end-user releases.
 
-`reloq-c-android-arm64-MAJOR.MINOR.PATCH.apk`
-
-The Android release workflow builds and uploads the APK when a matching `vMAJOR.MINOR.PATCH` tag is pushed. The tag must match the app's manifest `versionName`. The installed application uses the public Releases API and does not contain a personal GitHub token.
+For a stable update, increase `versionName` and `versionCode` in `android/AndroidManifest.xml`, then push a matching tag such as `v1.2.3`. The Android workflow builds the versioned ARM64 APK and publishes it to the corresponding stable GitHub Release. The installed application uses the public Releases API and does not contain a personal GitHub token.
 
 ## Upstream projects and attribution
 

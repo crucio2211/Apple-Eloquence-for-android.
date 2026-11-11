@@ -1,5 +1,11 @@
 # Android release notes
 
+## 1.2.4
+
+- Restored Apple Eloquence branding throughout the Android launcher, app, and TTS service labels.
+- Renamed the published ARM64 APK to `apple-eloquence-android-arm64-1.2.4.apk`.
+- Preserved the Android package name and signing identity for in-place upgrades.
+
 ## 1.2.3
 
 - Added native words-per-minute speed control alongside the ECI speed scale.

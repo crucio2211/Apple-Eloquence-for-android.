@@ -12,7 +12,7 @@ This project is a feature-enhanced Android integration built on existing open-so
 |---|---|
 | Application name | Apple Eloquence |
 | Android package | `org.reloq.tts` |
-| Manifest version | `1.2.3` |
+| Manifest version | `1.2.4` |
 | Supported ABI | ARM64 (`arm64-v8a`) |
 | Minimum Android version | Android 8.0 (API 26) |
 | Android TTS integration | Selectable system speech engine |
@@ -88,7 +88,7 @@ Every successful Android APK build from the `main` branch (including a manual wo
 
 The in-app **App updates** checker ignores prereleases, so this continuous test build is not offered as a normal stable update. Pull-request builds and diagnostic/test artifacts remain in GitHub Actions and are not published as end-user releases.
 
-For a stable update, increase `versionName` and `versionCode` in `android/AndroidManifest.xml`, then push a matching tag such as `v1.2.3`. The Android workflow builds the versioned ARM64 APK and publishes it to the corresponding stable GitHub Release. The installed application uses the public Releases API and does not contain a personal GitHub token.
+For a stable update, increase `versionName` and `versionCode` in `android/AndroidManifest.xml`, then push a matching tag such as `v1.2.4`. The Android workflow builds the versioned ARM64 APK and publishes it to the corresponding stable GitHub Release. The installed application uses the public Releases API and does not contain a personal GitHub token.
 
 ## Upstream projects and attribution
 
@@ -122,7 +122,7 @@ python3 android/build.py \
   --java-home "$JAVA_HOME" \
   --verified-dictionaries \
   --jobs 2 \
-  --output dist/apple-eloquence-android-arm64-1.2.3.apk
+  --output dist/apple-eloquence-android-arm64-1.2.4.apk
 ```
 
 See [Android implementation and build notes](android/README.md) for the source layout, build requirements, test commands, and release workflow.

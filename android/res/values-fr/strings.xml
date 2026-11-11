@@ -9,7 +9,7 @@
     <string name="download_update">Ouvrir le téléchargement dans le navigateur</string>
     <string name="update_failed">Échec de la mise à jour : %1$s</string>
     <string name="browser_update">Téléchargement ouvert. Utilisez le navigateur et la procédure d’installation habituelle d’Android. Gardez Play Protect activé.</string>
-    <string name="engine_help">Synthèse vocale hors connexion. Choisissez une langue et une voix à tester, ou sélectionnez Apple Eloquence dans les paramètres de synthèse vocale d’Android.</string>
+    <string name="engine_help">Synthèse vocale hors connexion. Choisissez une langue et une voix à tester, ou sélectionnez ReLoq C dans les paramètres de synthèse vocale d’Android.</string>
     <string name="language">Langue</string>
     <string name="profile">Voix</string>
     <string name="sample_rate">Fréquence d’échantillonnage</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Paramètres de synthèse vocale d’Android</string>
     <string name="initializing">Initialisation du moteur vocal</string>
     <string name="ready">Moteur vocal prêt</string>
-    <string name="unavailable">Moteur vocal indisponible. Ouvrez les paramètres de synthèse vocale d’Android et sélectionnez Apple Eloquence.</string>
+    <string name="unavailable">Moteur vocal indisponible. Ouvrez les paramètres de synthèse vocale d’Android et sélectionnez ReLoq C.</string>
     <string-array name="pause_modes">
         <item>Jamais</item>
         <item>À la fin</item>
@@ -90,4 +90,34 @@
     <string name="pitch_hz_mode">Utiliser la hauteur en hertz</string>
     <string name="pitch_hz_value">Hauteur de base en hertz</string>
     <string name="pitch_hz_error">Saisissez une valeur de 1 à 24000 Hz.</string>
+    <string name="speed_scale">Échelle de vitesse manuelle :</string>
+    <string name="speed_eci_mode">Vitesse ECI (0–250)</string>
+    <string name="speed_wpm_mode">Mots par minute (1–6000)</string>
+    <string name="speed_eci_value">Vitesse ECI manuelle</string>
+    <string name="speed_wpm_error">Saisissez une valeur de 1 à 6000 mots par minute.</string>
+    <string name="pitch_scale">Échelle de hauteur manuelle :</string>
+    <string name="pitch_eci_mode">Hauteur ECI (0–100)</string>
+    <string name="equalizer">Égaliseur</string>
+    <string name="equalizer_enabled">Activer l’égaliseur</string>
+    <string name="equalizer_preset">Préréglage de l’égaliseur</string>
+    <string name="equalizer_low">Graves (dB)</string>
+    <string name="equalizer_mid">Médiums (dB)</string>
+    <string name="equalizer_high">Aigus (dB)</string>
+    <string-array name="equalizer_presets"><item>Équilibré</item><item>Chaud</item><item>Brillant</item><item>Doux</item><item>Personnalisé</item></string-array>
+    <string name="equalizer_advanced">Filtres avancés…</string>
+    <string name="filter_title">Filtres avancés de l’égaliseur</string>
+    <string name="filter_select">Filtre</string>
+    <string name="filter_name">Filtre</string>
+    <string name="filter_enabled">Activer le filtre</string>
+    <string name="filter_frequency">Fréquence (Hz)</string>
+    <string name="filter_gain">Gain (dB)</string>
+    <string name="filter_width" formatted="false">Largeur (% d’octave)</string>
+    <string name="filter_nyquist" formatted="false">100 % correspond à une octave. Les fréquences à partir de la moitié du taux d’échantillonnage sont inactives.</string>
+    <string name="automatic_updates">Rechercher automatiquement les mises à jour</string>
+    <string name="notification_settings">Paramètres des notifications</string>
+    <string name="notification_explanation">Autorisez les notifications pour connaître les nouvelles versions de ReLoq C. La recherche manuelle reste possible.</string>
+    <string name="allow_notifications">Autoriser les notifications</string>
+    <string name="not_now">Pas maintenant</string>
+    <string name="update_notification_title">Mises à jour de ReLoq C</string>
+    <string name="update_notification_body">La version %1$s est disponible. Touchez pour consulter et télécharger.</string>
 </resources>

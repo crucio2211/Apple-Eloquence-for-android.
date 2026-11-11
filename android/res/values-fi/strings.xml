@@ -9,7 +9,7 @@
     <string name="download_update">Avaa lataus selaimessa</string>
     <string name="update_failed">Päivitys epäonnistui: %1$s</string>
     <string name="browser_update">Lataus avattu. Käytä selainta ja Androidin tavallista asennustoimintoa. Pidä Play Protect käytössä.</string>
-    <string name="engine_help">Puheentuotto ilman verkkoyhteyttä. Valitse kokeiltava kieli ja ääni tai valitse ReLoq C Androidin tekstistä puheeksi -asetuksissa.</string>
+    <string name="engine_help">Puheentuotto ilman verkkoyhteyttä. Valitse kokeiltava kieli ja ääni tai valitse Apple Eloquence Androidin tekstistä puheeksi -asetuksissa.</string>
     <string name="language">Kieli</string>
     <string name="profile">Ääni</string>
     <string name="sample_rate">Näytteenottotaajuus</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Androidin puheasetukset</string>
     <string name="initializing">Puhemoottoria käynnistetään</string>
     <string name="ready">Puhemoottori valmis</string>
-    <string name="unavailable">Puhemoottori ei ole käytettävissä. Avaa Androidin puheasetukset ja valitse ReLoq C.</string>
+    <string name="unavailable">Puhemoottori ei ole käytettävissä. Avaa Androidin puheasetukset ja valitse Apple Eloquence.</string>
     <string-array name="pause_modes">
         <item>Ei koskaan</item>
         <item>Lopussa</item>
@@ -115,9 +115,9 @@
     <string name="filter_nyquist" formatted="false">100 % vastaa yhtä oktaavia. Vähintään puolet näytteenottotaajuudesta olevat taajuudet eivät vaikuta.</string>
     <string name="automatic_updates">Tarkista sovelluspäivitykset automaattisesti</string>
     <string name="notification_settings">Ilmoitusasetukset</string>
-    <string name="notification_explanation">Salli ilmoitukset saadaksesi tiedon ReLoq C:n uusista versioista. Voit tarkistaa päivitykset myös itse.</string>
+    <string name="notification_explanation">Salli ilmoitukset saadaksesi tiedon Apple Eloquence:n uusista versioista. Voit tarkistaa päivitykset myös itse.</string>
     <string name="allow_notifications">Salli ilmoitukset</string>
     <string name="not_now">Ei nyt</string>
-    <string name="update_notification_title">ReLoq C -päivitykset</string>
+    <string name="update_notification_title">Apple Eloquence -päivitykset</string>
     <string name="update_notification_body">Versio %1$s on saatavilla. Avaa tarkistaaksesi ja ladataksesi.</string>
 </resources>

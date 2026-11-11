@@ -26,7 +26,7 @@ final class RegexDictionaries {
  }
  static String apply(Loaded loaded,String text) {
   if(loaded==null||text==null||text.isEmpty())return text;
-  String out=text;for(Entry e:loaded.entries)try{out=e.compiled.matcher(out).replaceAll(e.replacement);}catch(RuntimeException bad){System.err.println("ReLoq: "+"Regex replacement failed: "+e.pattern,bad);}
+  String out=text;for(Entry e:loaded.entries)try{out=e.compiled.matcher(out).replaceAll(e.replacement);}catch(RuntimeException bad){System.err.println("ReLoq: Regex replacement failed: "+e.pattern); bad.printStackTrace();}
   return out;
  }
  static boolean current(Loaded l){if(l==null)return false;File f=new File(l.path);return f.isFile()&&f.lastModified()==l.modified;}

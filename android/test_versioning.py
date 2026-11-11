@@ -8,6 +8,16 @@ manifest = ET.parse(root / 'android/AndroidManifest.xml').getroot()
 android = '{http://schemas.android.com/apk/res/android}'
 version = manifest.get(android + 'versionName')
 code = int(manifest.get(android + 'versionCode'))
+resources = ET.parse(root / 'android/res/values/strings.xml').getroot()
+app_name = next(x.text for x in resources if x.tag == 'string' and x.get('name') == 'app_name')
+assert app_name == 'Apple Eloquence', app_name
+application = manifest.find('application')
+assert application is not None
+assert application.get(android + 'label') == '@string/app_name'
+workflow = (root / '.github/workflows/android.yml').read_text()
+build_script = (root / 'android/build.py').read_text()
+assert 'apple-eloquence-android-arm64-${VERSION}.apk' in workflow
+assert 'apple-eloquence-android-arm64-1.2.3.apk' in build_script
 match = re.fullmatch(r'(\d+)\.(\d+)\.(\d+)', version or '')
 development = re.fullmatch(r'(\d+)\.(\d+)\.(\d+)-(?:dev|rc)\d+', version or '')
 if match:

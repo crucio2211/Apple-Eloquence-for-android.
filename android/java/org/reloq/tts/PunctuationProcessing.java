@@ -11,7 +11,7 @@ final class PunctuationProcessing {
    if(cp>0x20){PunctSymbols.Entry e=PunctSymbols.lookup(cp);if(e!=null){pres=e.pres;if(e.level<=level)rep=e.word;}}
    if((cp==46||cp==44)&&i>0&&i+adv<text.length()&&digit(text.charAt(i-1))&&digit(text.charAt(i+adv))){rep=null;pres=PunctSymbols.PASS;}
    if(cp==46&&level>=SOME&&rep!=null&&!ending&&!standaloneDot&&!(i>0&&i+adv<text.length()&&digit(text.charAt(i-1))&&digit(text.charAt(i+adv)))){rep="dot";pres=PunctSymbols.PASS;}
-   if(standaloneDot&&level>=SOME){rep=null;pres=PunctSymbols.NEVER;}
+   if(standaloneDot&&(level==SOME||level==MOST)){rep=null;pres=PunctSymbols.NEVER;}
    if(ending){if(cp==46||level<ALL)rep=null;pres=PunctSymbols.ALWAYS;}
    if(rep!=null){pad(out);out.append(rep);if(pres==PunctSymbols.ALWAYS||pres==PunctSymbols.NOREP)out.append(' ').append((char)96).append("p1");if(i+adv>=text.length()||!Character.isWhitespace(text.charAt(i+adv)))out.append(' ');}
    else if(pres!=PunctSymbols.NEVER)out.append(text,i,i+adv);

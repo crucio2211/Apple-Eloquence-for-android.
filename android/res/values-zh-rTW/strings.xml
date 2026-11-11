@@ -9,7 +9,7 @@
     <string name="download_update">在瀏覽器中開啟下載</string>
     <string name="update_failed">更新失敗：%1$s</string>
     <string name="browser_update">已開啟下載。請使用瀏覽器和 Android 的一般安裝流程。請保持 Play 安全防護啟用。</string>
-    <string name="engine_help">離線語音合成。選擇語言和聲音進行測試，或在 Android 的文字轉語音設定中選擇 ReLoq C。</string>
+    <string name="engine_help">離線語音合成。選擇語言和聲音進行測試，或在 Android 的文字轉語音設定中選擇 Apple Eloquence。</string>
     <string name="language">語言</string>
     <string name="profile">聲音</string>
     <string name="sample_rate">取樣率</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Android 語音設定</string>
     <string name="initializing">正在初始化語音引擎</string>
     <string name="ready">語音引擎已就緒</string>
-    <string name="unavailable">語音引擎無法使用。請開啟 Android 語音設定並選擇 ReLoq C。</string>
+    <string name="unavailable">語音引擎無法使用。請開啟 Android 語音設定並選擇 Apple Eloquence。</string>
     <string-array name="pause_modes">
         <item>從不</item>
         <item>僅在結尾</item>
@@ -115,9 +115,9 @@
     <string name="filter_nyquist" formatted="false">100% 為一個八度。達到或超過取樣率一半的頻率不會生效。</string>
     <string name="automatic_updates">自動檢查應用程式更新</string>
     <string name="notification_settings">通知設定</string>
-    <string name="notification_explanation">允許通知以得知 ReLoq C 的新版本。也可以手動檢查更新。</string>
+    <string name="notification_explanation">允許通知以得知 Apple Eloquence 的新版本。也可以手動檢查更新。</string>
     <string name="allow_notifications">允許通知</string>
     <string name="not_now">暫不</string>
-    <string name="update_notification_title">ReLoq C 更新</string>
+    <string name="update_notification_title">Apple Eloquence 更新</string>
     <string name="update_notification_body">版本 %1$s 已推出。點選以檢視並下載。</string>
 </resources>

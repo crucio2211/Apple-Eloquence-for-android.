@@ -30,7 +30,7 @@ public final class ReLoqService extends TextToSpeechService {
     private volatile Catalog.Language selected = Catalog.LANGUAGES[3];
     private RegexDictionaries.Loaded loadedRegex;
     private String loadedRegexPath;
-    private long loadedRegexModified = Long.MIN_VALUE;\n    private RegexDictionaries.Loaded loadedRegex;\n    private String loadedRegexPath;\n    private long loadedRegexModified = Long.MIN_VALUE;
+    private long loadedRegexModified = Long.MIN_VALUE;
 
     @Override public void onCreate(){super.onCreate();startDictionariesIfUnlocked();}
 

@@ -26,7 +26,18 @@ public final class TextProcessingTest {
         eq("net with handle",EmojiProcessing.apply(emoji(0x1FA8D),3),"Emoji 18 net");
         eq("Hello comma "+(char)96+"p1 world",PunctuationProcessing.apply("Hello, world",PunctuationProcessing.ALL),"comma punctuation");
         eq("Hello!",PunctuationProcessing.apply("Hello!",PunctuationProcessing.MOST),"sentence prosody");
-        eq("1000",TextPipeline.process("1,000",false,3,false,0,false,2),"pipeline comma pass");
-        System.out.println("Android text processing checks passed (Emoji 18.0, compression, numbers, punctuation).");
+        eq("",PunctuationProcessing.apply(". .",PunctuationProcessing.SOME),"isolated dots in Some");
+        eq("",PunctuationProcessing.apply(". .",PunctuationProcessing.MOST),"isolated dots in Most");
+        eq("dot",PunctuationProcessing.apply("dot.",PunctuationProcessing.SOME),"trailing dot remains a word");
+        eq("Chat Gpt Talk Back PDF File i Phone NVDA",CamelCase.apply("ChatGpt TalkBack PDFFile iPhone NVDA"),"camel-case splitting");
+        try {
+            java.io.File regexFile=java.io.File.createTempFile("reloq-regex",".dic");
+            if(!RegexDictionaries.append(regexFile,"\\bNVDA\\b","en vee dee ay",false))throw new AssertionError("regex append");
+            RegexDictionaries.Loaded loaded=RegexDictionaries.load(regexFile);
+            eq("en vee dee ay and en vee dee ay",RegexDictionaries.apply(loaded,"NVDA and nvda"),"regex dictionary case-insensitive replacement");
+            regexFile.delete();
+        } catch(java.io.IOException error) { throw new AssertionError(error); }
+        eq("1000",TextPipeline.process("1,000",false,3,false,0,false,false,2),"pipeline comma pass");
+        System.out.println("Android text processing checks passed (Emoji 18.0, compression, numbers, camel case, regex, punctuation).");
     }
 }

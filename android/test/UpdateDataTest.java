@@ -23,6 +23,9 @@ public final class UpdateDataTest {
         require(data.name.equals(name)&&data.url.equals(url)&&data.size==18000000&&data.sha256.equals(hash));
         require(UpdateData.candidate(name,url,18000000,digest,20197)==null);
         require(UpdateData.candidate(name,url,18000000,digest,20198)==null);
+        require(UpdateData.candidate("reloq-c-android-arm64-1.2.3.apk",
+            "https://github.com/crucio2211/Apple-Eloquence-for-android./releases/download/v1.2.3/reloq-c-android-arm64-1.2.3.apk",
+            18000000,digest,0)==null);
         require(UpdateData.candidate("other.apk",url,18000000,digest,0)==null);
         require(UpdateData.candidate("apple-eloquence-android-x86-0.2.198.apk",url,18000000,digest,0)==null);
         String next="apple-eloquence-android-arm64-0.2.198.apk";

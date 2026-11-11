@@ -73,7 +73,7 @@ jobs:
               exit 1
             fi
           fi
-          APK_NAME="reloq-c-android-arm64-${VERSION}.apk"
+          APK_NAME="apple-eloquence-android-arm64-${VERSION}.apk"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "apk_name=$APK_NAME" >> "$GITHUB_OUTPUT"
 
@@ -146,6 +146,15 @@ jobs:
             gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
               --title "$TITLE" --notes "$NOTES" --prerelease
           fi
+          # Remove the upstream-named APKs so release downloads use Apple Eloquence branding only.
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' |
+            while IFS= read -r asset; do
+              case "$asset" in
+                reloq-c-android-arm64-*.apk)
+                  gh release delete-asset "$RELEASE_TAG" "$asset" --repo "$GITHUB_REPOSITORY" --yes
+                  ;;
+              esac
+            done
           gh release upload "$RELEASE_TAG" "$APK_PATH" --repo "$GITHUB_REPOSITORY" --clobber
 
       - name: Publish stable Android APK to the matching GitHub Release
@@ -161,4 +170,13 @@ jobs:
               --title "Apple Eloquence $RELEASE_TAG" \
               --notes "Stable Android ARM64 release. Download the APK and follow Android's normal installation flow."
           fi
+          # Remove the upstream-named APKs so release downloads use Apple Eloquence branding only.
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' |
+            while IFS= read -r asset; do
+              case "$asset" in
+                reloq-c-android-arm64-*.apk)
+                  gh release delete-asset "$RELEASE_TAG" "$asset" --repo "$GITHUB_REPOSITORY" --yes
+                  ;;
+              esac
+            done
           gh release upload "$RELEASE_TAG" "$APK_PATH" --repo "$GITHUB_REPOSITORY" --clobber

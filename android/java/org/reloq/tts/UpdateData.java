@@ -8,7 +8,7 @@ final class UpdateData {
     static final String REPOSITORY="crucio2211/Apple-Eloquence-for-android.";
     static final String RELEASES="https://api.github.com/repos/"+REPOSITORY+"/releases?per_page=30";
     static final long LIMIT=128L*1024*1024;
-    private static final Pattern NAME=Pattern.compile("reloq-c-android-arm64-((\\d+)\\.(\\d+)\\.(\\d+))\\.apk");
+    private static final Pattern NAME=Pattern.compile("apple-eloquence-android-arm64-((\\d+)\\.(\\d+)\\.(\\d+))\\.apk");
     static final class Package {
         final String name,version,url,sha256;
         final long code,size;

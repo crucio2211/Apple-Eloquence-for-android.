@@ -31,6 +31,11 @@ def main():
     for path in paths:
         translated = resources(path)
         assert expected <= set(translated) <= set(base), (path, "Missing/extra resource")
+        for node in translated.values():
+            text_nodes = list(node) if node.tag == "string-array" else [node]
+            for text_node in text_nodes:
+                value = text_node.text or ""
+                assert "ReLoq C" not in value and "ReLoq-C" not in value, (path, "Stale product branding")
         for key, node in translated.items():
             reference = base[key]
             assert node.tag == reference.tag, (path, key, "Wrong resource type")

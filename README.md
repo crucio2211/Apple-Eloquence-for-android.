@@ -122,7 +122,7 @@ python3 android/build.py \
   --java-home "$JAVA_HOME" \
   --verified-dictionaries \
   --jobs 2 \
-  --output dist/reloq-c-android-arm64-1.2.3.apk
+  --output dist/apple-eloquence-android-arm64-1.2.3.apk
 ```
 
 See [Android implementation and build notes](android/README.md) for the source layout, build requirements, test commands, and release workflow.

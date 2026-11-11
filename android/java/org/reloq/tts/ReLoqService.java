@@ -27,7 +27,7 @@ public final class ReLoqService extends TextToSpeechService {
     private boolean dictionariesStarted,legacyFilesCleaned;
     private Future<?> dictionaryStartup;
     private volatile PcmQueue active;
-    private volatile Catalog.Language selected = Catalog.LANGUAGES[3];
+    private volatile Catalog.Language selected = Catalog.LANGUAGES[3];\n    private RegexDictionaries.Loaded loadedRegex;\n    private String loadedRegexPath;\n    private long loadedRegexModified = Long.MIN_VALUE;
 
     @Override public void onCreate(){super.onCreate();startDictionariesIfUnlocked();}
 
@@ -190,6 +190,22 @@ public final class ReLoqService extends TextToSpeechService {
             callback.done();
         }
     }
+    /** Apply the selected UTF-8 regex dictionary after the built-in text passes. */
+    private String applyRegexDictionary(android.content.SharedPreferences preferences,String text) {
+        if(!BootPreferences.unlocked(this)||!preferences.getBoolean("regex_enabled",false))return text;
+        String path=preferences.getString("regex_path",null);
+        if(path==null||path.isEmpty())return text;
+        File file=new File(path);
+        if(!file.isFile())return text;
+        long modified=file.lastModified();
+        if(loadedRegex==null||!path.equals(loadedRegexPath)||modified!=loadedRegexModified) {
+            loadedRegex=RegexDictionaries.load(file);
+            loadedRegexPath=path;
+            loadedRegexModified=modified;
+        }
+        return RegexDictionaries.apply(loadedRegex,text);
+    }
+
     private void stopNative(PcmQueue queue) {
         synchronized(contextGuard) { if(context!=0) NativeEngine.stop(context,queue); }
     }

@@ -23,7 +23,9 @@ public final class RegexDictionaryActivity extends Activity {
         super.onCreate(state);
         prefs=getSharedPreferences("settings",MODE_PRIVATE);
         String path=prefs.getString("regex_path",null);
-        file=path==null?new File(getFilesDir(),"dictionaries/regex.dic"):new File(path);
+        File selected=path==null?null:new File(path);
+        file=selected!=null&&selected.isFile()?selected:new File(getFilesDir(),"dictionaries/regex.dic");
+        if(path!=null&&(selected==null||!selected.isFile()))prefs.edit().remove("regex_path").remove("regex_name").putBoolean("regex_enabled",false).apply();
         ScrollView scroll=new ScrollView(this);
         content=new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);

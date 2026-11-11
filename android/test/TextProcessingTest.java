@@ -45,7 +45,7 @@ public final class TextProcessingTest {
         } catch(java.io.IOException error) { throw new AssertionError(error); }
         eq("1000",TextPipeline.process("1,000",false,3,false,0,false,false,2),"pipeline comma pass");
         eq("user at example.com",TextPipeline.process("user@example.com",false,3,false,0,false,false,2),"at sign when punctuation is off");
-        eq("user at example.com",TextPipeline.process("user@example.com",false,3,false,0,false,true,2),"at sign when punctuation is on");
+        eq("user at example dot com",TextPipeline.process("user@example.com",false,3,false,0,false,true,2),"at sign stays at while punctuation handles the domain dot");
         System.out.println("Android text processing checks passed (Emoji 18.0, compression, numbers, camel case, regex, symbol words, punctuation).");
     }
 }

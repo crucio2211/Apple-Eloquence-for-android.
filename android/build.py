@@ -33,7 +33,7 @@ def main():
     parser.add_argument("--android-jar",type=Path)
     parser.add_argument("--jobs",type=int,default=4)
     parser.add_argument("--build-dir",type=Path,help="isolated Android build directory")
-    parser.add_argument("--output",type=Path,default=REPOSITORY/"dist/reloq-c-android-arm64-1.2.3.apk")
+    parser.add_argument("--output",type=Path,default=REPOSITORY/"dist/apple-eloquence-android-arm64-1.2.3.apk")
     parser.add_argument("--keystore",type=Path,default=HERE/"release-signing.p12")
     parser.add_argument("--verified-dictionaries",action="store_true",
         help="use locally verified data after separately resolving its current master commit")

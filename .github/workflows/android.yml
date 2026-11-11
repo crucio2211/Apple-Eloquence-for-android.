@@ -111,7 +111,7 @@ jobs:
             --jobs 2 \
             --output "dist/${{ steps.version.outputs.apk_name }}"
 
-      - name: Upload APK
+      - name: Upload APK as a workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: apple-eloquence-android-arm64
@@ -119,16 +119,36 @@ jobs:
           compression-level: 0
           retention-days: 14
 
-      - name: Publish Android APK to the matching GitHub Release
+      - name: Publish latest main build to the rolling GitHub Release
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: android-main
+          APK_PATH: dist/${{ steps.version.outputs.apk_name }}
+        run: |
+          set -euo pipefail
+          TITLE="Apple Eloquence Android — Latest main build"
+          NOTES="Latest successful Android ARM64 build from the main branch. This is a testing prerelease and is excluded from the in-app stable update checker. Source commit: $GITHUB_SHA"
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" --notes "$NOTES" --prerelease
+          else
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" --notes "$NOTES" --prerelease
+          fi
+          gh release upload "$RELEASE_TAG" "$APK_PATH" --repo "$GITHUB_REPOSITORY" --clobber
+
+      - name: Publish stable Android APK to the matching GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
           APK_PATH: dist/${{ steps.version.outputs.apk_name }}
         run: |
+          set -euo pipefail
           if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
               --title "Apple Eloquence $RELEASE_TAG" \
-              --notes "Android ARM64 release. Download the APK and follow Android's normal installation flow."
+              --notes "Stable Android ARM64 release. Download the APK and follow Android's normal installation flow."
           fi
           gh release upload "$RELEASE_TAG" "$APK_PATH" --repo "$GITHUB_REPOSITORY" --clobber

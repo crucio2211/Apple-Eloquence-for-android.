@@ -9,7 +9,7 @@
     <string name="download_update">在浏览器中打开下载</string>
     <string name="update_failed">更新失败：%1$s</string>
     <string name="browser_update">已打开下载。请使用浏览器和 Android 的正常安装流程。请保持 Play 保护机制开启。</string>
-    <string name="engine_help">离线语音合成。选择一种语言和声音进行测试，或在 Android 的文字转语音设置中选择 ReLoq C。</string>
+    <string name="engine_help">离线语音合成。选择一种语言和声音进行测试，或在 Android 的文字转语音设置中选择 Apple Eloquence。</string>
     <string name="language">语言</string>
     <string name="profile">声音</string>
     <string name="sample_rate">采样率</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Android 语音设置</string>
     <string name="initializing">正在初始化语音引擎</string>
     <string name="ready">语音引擎已就绪</string>
-    <string name="unavailable">语音引擎不可用。请打开 Android 语音设置并选择 ReLoq C。</string>
+    <string name="unavailable">语音引擎不可用。请打开 Android 语音设置并选择 Apple Eloquence。</string>
     <string-array name="pause_modes">
         <item>从不</item>
         <item>仅末尾</item>

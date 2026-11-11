@@ -14,6 +14,9 @@ final class UpdateData {
         final long code,size;
         Package(String n,String v,String u,String h,long c,long s) {name=n;version=v;url=u;sha256=h;code=c;size=s;}
     }
+    static boolean isEligibleRelease(boolean draft,boolean prerelease) {
+        return !draft&&!prerelease;
+    }
     static Package candidate(String name,String url,long size,String digest,long installed) {
         Matcher m=NAME.matcher(name);
         if(!m.matches())return null;

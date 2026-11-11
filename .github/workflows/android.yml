@@ -90,9 +90,9 @@ jobs:
         run: |
           python3 android/test_auto_updates.py --java-home "$JAVA_HOME"
           python3 android/test_direct_boot.py --java-home "$JAVA_HOME"
-          python3 android/test_settings.py \\
-            --java-home "$JAVA_HOME" \\
-            --android-jar "$ANDROID_HOME/platforms/android-35/android.jar" \\
+          python3 android/test_settings.py \
+            --java-home "$JAVA_HOME" \
+            --android-jar "$ANDROID_HOME/platforms/android-35/android.jar" \
             --settings-only
           python3 android/test_translations.py
 

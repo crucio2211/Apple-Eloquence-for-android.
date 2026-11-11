@@ -17,7 +17,7 @@ assert application.get(android + 'label') == '@string/app_name'
 workflow = (root / '.github/workflows/android.yml').read_text()
 build_script = (root / 'android/build.py').read_text()
 assert 'apple-eloquence-android-arm64-${VERSION}.apk' in workflow
-assert 'apple-eloquence-android-arm64-1.2.3.apk' in build_script
+assert 'apple-eloquence-android-arm64-1.2.4.apk' in build_script
 assert workflow.count('gh release delete-asset') == 2
 assert 'reloq-c-android-arm64-*.apk' in workflow
 match = re.fullmatch(r'(\d+)\.(\d+)\.(\d+)', version or '')

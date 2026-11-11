@@ -7,9 +7,11 @@ final class PunctuationProcessing {
   for(int i=0;i<text.length();) {
    int cp=text.codePointAt(i),adv=Character.charCount(cp); String rep=null; int pres=PunctSymbols.PASS;
    boolean ending=isSentenceMark(cp)&&isSentenceEnding(text,i);
+   boolean standaloneDot=cp==46&&(i==0||Character.isWhitespace(text.charAt(i-1)))&&(i+adv>=text.length()||Character.isWhitespace(text.charAt(i+adv)));
    if(cp>0x20){PunctSymbols.Entry e=PunctSymbols.lookup(cp);if(e!=null){pres=e.pres;if(e.level<=level)rep=e.word;}}
    if((cp==46||cp==44)&&i>0&&i+adv<text.length()&&digit(text.charAt(i-1))&&digit(text.charAt(i+adv))){rep=null;pres=PunctSymbols.PASS;}
-   if(cp==46&&level>=SOME&&rep!=null&&!ending&&!(i>0&&i+adv<text.length()&&digit(text.charAt(i-1))&&digit(text.charAt(i+adv)))){rep="dot";pres=PunctSymbols.PASS;}
+   if(cp==46&&level>=SOME&&rep!=null&&!ending&&!standaloneDot&&!(i>0&&i+adv<text.length()&&digit(text.charAt(i-1))&&digit(text.charAt(i+adv)))){rep="dot";pres=PunctSymbols.PASS;}
+   if(standaloneDot&&level>=SOME){rep=null;pres=PunctSymbols.NEVER;}
    if(ending){if(cp==46||level<ALL)rep=null;pres=PunctSymbols.ALWAYS;}
    if(rep!=null){pad(out);out.append(rep);if(pres==PunctSymbols.ALWAYS||pres==PunctSymbols.NOREP)out.append(' ').append((char)96).append("p1");if(i+adv>=text.length()||!Character.isWhitespace(text.charAt(i+adv)))out.append(' ');}
    else if(pres!=PunctSymbols.NEVER)out.append(text,i,i+adv);

@@ -18,7 +18,7 @@
             <intent-filter><action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" /></intent-filter>
         </activity>
-        <activity android:name=".DictionaryActivity" android:exported="false" android:label="@string/dictionaries" />
+        <activity android:name=".RegexDictionaryActivity" android:exported="false" android:label="Regular-expression dictionary settings" />\n        <activity android:name=".DictionaryActivity" android:exported="false" android:label="@string/dictionaries" />
         <activity android:name=".UpdateActivity" android:exported="false" android:label="@string/app_updates" />
         <activity android:name=".VoiceDataActivity" android:exported="true" android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>

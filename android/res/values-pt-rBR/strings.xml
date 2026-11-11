@@ -9,7 +9,7 @@
     <string name="download_update">Abrir download no navegador</string>
     <string name="update_failed">Falha na atualização: %1$s</string>
     <string name="browser_update">Download aberto. Use o navegador e a instalação normal do Android. Mantenha o Google Play Protect ativado.</string>
-    <string name="engine_help">Síntese de voz offline. Escolha um idioma e uma voz para testar, ou selecione o ReLoq C nas configurações de conversão de texto em fala do Android.</string>
+    <string name="engine_help">Síntese de voz offline. Escolha um idioma e uma voz para testar, ou selecione o Apple Eloquence nas configurações de conversão de texto em fala do Android.</string>
     <string name="language">Idioma</string>
     <string name="profile">Voz</string>
     <string name="sample_rate">Taxa de amostragem</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Configurações de fala do Android</string>
     <string name="initializing">Inicializando o mecanismo de fala</string>
     <string name="ready">Mecanismo de fala pronto</string>
-    <string name="unavailable">Mecanismo de fala indisponível. Abra as configurações de fala do Android e selecione o ReLoq C.</string>
+    <string name="unavailable">Mecanismo de fala indisponível. Abra as configurações de fala do Android e selecione o Apple Eloquence.</string>
     <string-array name="pause_modes">
         <item>Nunca</item>
         <item>No final</item>

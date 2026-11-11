@@ -9,7 +9,7 @@
     <string name="download_update">Άνοιγμα λήψης στο πρόγραμμα περιήγησης</string>
     <string name="update_failed">Η ενημέρωση απέτυχε: %1$s</string>
     <string name="browser_update">Η λήψη άνοιξε. Χρησιμοποιήστε το πρόγραμμα περιήγησης και την κανονική διαδικασία εγκατάστασης του Android. Διατηρήστε το Play Protect ενεργό.</string>
-    <string name="engine_help">Σύνθεση ομιλίας χωρίς σύνδεση. Επιλέξτε γλώσσα και φωνή για δοκιμή ή επιλέξτε το ReLoq C στις ρυθμίσεις μετατροπής κειμένου σε ομιλία του Android.</string>
+    <string name="engine_help">Σύνθεση ομιλίας χωρίς σύνδεση. Επιλέξτε γλώσσα και φωνή για δοκιμή ή επιλέξτε το Apple Eloquence στις ρυθμίσεις μετατροπής κειμένου σε ομιλία του Android.</string>
     <string name="language">Γλώσσα</string>
     <string name="profile">Φωνή</string>
     <string name="sample_rate">Ρυθμός δειγματοληψίας</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Ρυθμίσεις ομιλίας Android</string>
     <string name="initializing">Αρχικοποίηση μηχανής ομιλίας</string>
     <string name="ready">Η μηχανή ομιλίας είναι έτοιμη</string>
-    <string name="unavailable">Η μηχανή ομιλίας δεν είναι διαθέσιμη. Ανοίξτε τις ρυθμίσεις ομιλίας του Android και επιλέξτε το ReLoq C.</string>
+    <string name="unavailable">Η μηχανή ομιλίας δεν είναι διαθέσιμη. Ανοίξτε τις ρυθμίσεις ομιλίας του Android και επιλέξτε το Apple Eloquence.</string>
     <string-array name="pause_modes">
         <item>Ποτέ</item>
         <item>Στο τέλος</item>

@@ -9,7 +9,7 @@
     <string name="download_update">ブラウザーでダウンロードを開く</string>
     <string name="update_failed">更新に失敗しました：%1$s</string>
     <string name="browser_update">ダウンロードを開きました。ブラウザーと Android の通常のインストール手順を使用してください。Play プロテクトは有効にしておいてください。</string>
-    <string name="engine_help">オフラインの音声合成です。テストする言語と音声を選ぶか、Android のテキスト読み上げ設定で ReLoq C を選んでください。</string>
+    <string name="engine_help">オフラインの音声合成です。テストする言語と音声を選ぶか、Android のテキスト読み上げ設定で Apple Eloquence を選んでください。</string>
     <string name="language">言語</string>
     <string name="profile">音声</string>
     <string name="sample_rate">サンプリング周波数</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Android の読み上げ設定</string>
     <string name="initializing">音声エンジンを初期化しています</string>
     <string name="ready">音声エンジンの準備ができました</string>
-    <string name="unavailable">音声エンジンを利用できません。Android の読み上げ設定を開き、ReLoq C を選んでください。</string>
+    <string name="unavailable">音声エンジンを利用できません。Android の読み上げ設定を開き、Apple Eloquence を選んでください。</string>
     <string-array name="pause_modes">
         <item>短くしない</item>
         <item>末尾のみ</item>

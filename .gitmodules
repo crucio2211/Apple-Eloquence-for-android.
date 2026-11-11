@@ -1,0 +1,3 @@
+[submodule "android/reloq-core"]
+	path = android/reloq-core
+	url = https://github.com/hozosch/Reloq-C.git

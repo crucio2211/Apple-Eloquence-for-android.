@@ -5,6 +5,7 @@
 - Restored Apple Eloquence branding throughout the Android launcher, app, and TTS service labels.
 - Renamed the published ARM64 APK to `apple-eloquence-android-arm64-1.2.4.apk`.
 - Preserved the Android package name and signing identity for in-place upgrades.
+- Kept the Apple Eloquence name consistent across the launcher, app settings, TTS service, and localized UI.
 
 ## 1.2.3
 

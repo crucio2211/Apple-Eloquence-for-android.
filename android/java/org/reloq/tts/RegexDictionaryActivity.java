@@ -157,15 +157,18 @@ public final class RegexDictionaryActivity extends Activity {
                 File target=new File(getFilesDir(),"dictionaries/regex.dic");
                 File parent=target.getParentFile();
                 if(parent!=null)parent.mkdirs();
-                try(OutputStream out=new FileOutputStream(target)) {
+                File pending=new File(parent,"regex-import.tmp");
+                try(OutputStream out=new FileOutputStream(pending)) {
                     byte[] buf=new byte[8192];int n;
                     while((n=in.read(buf))!=-1)out.write(buf,0,n);
                 }
-                if(RegexDictionaries.count(target)==0) {
-                    target.delete();
+                if(RegexDictionaries.count(pending)==0) {
+                    pending.delete();
                     Toast.makeText(this,"No valid pattern/replacement entries found",Toast.LENGTH_LONG).show();
                     return;
                 }
+                if(target.exists())target.delete();
+                if(!pending.renameTo(target))throw new IOException("Cannot install imported dictionary");
                 file=target;
                 prefs.edit().putString("regex_path",file.getAbsolutePath()).putString("regex_name",file.getName()).putBoolean("regex_enabled",true).apply();
                 enabled.setChecked(true);

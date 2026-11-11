@@ -9,7 +9,7 @@
     <string name="download_update">Άνοιγμα λήψης στο πρόγραμμα περιήγησης</string>
     <string name="update_failed">Η ενημέρωση απέτυχε: %1$s</string>
     <string name="browser_update">Η λήψη άνοιξε. Χρησιμοποιήστε το πρόγραμμα περιήγησης και την κανονική διαδικασία εγκατάστασης του Android. Διατηρήστε το Play Protect ενεργό.</string>
-    <string name="engine_help">Σύνθεση ομιλίας χωρίς σύνδεση. Επιλέξτε γλώσσα και φωνή για δοκιμή ή επιλέξτε το Apple Eloquence στις ρυθμίσεις μετατροπής κειμένου σε ομιλία του Android.</string>
+    <string name="engine_help">Σύνθεση ομιλίας χωρίς σύνδεση. Επιλέξτε γλώσσα και φωνή για δοκιμή ή επιλέξτε το ReLoq C στις ρυθμίσεις μετατροπής κειμένου σε ομιλία του Android.</string>
     <string name="language">Γλώσσα</string>
     <string name="profile">Φωνή</string>
     <string name="sample_rate">Ρυθμός δειγματοληψίας</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Ρυθμίσεις ομιλίας Android</string>
     <string name="initializing">Αρχικοποίηση μηχανής ομιλίας</string>
     <string name="ready">Η μηχανή ομιλίας είναι έτοιμη</string>
-    <string name="unavailable">Η μηχανή ομιλίας δεν είναι διαθέσιμη. Ανοίξτε τις ρυθμίσεις ομιλίας του Android και επιλέξτε το Apple Eloquence.</string>
+    <string name="unavailable">Η μηχανή ομιλίας δεν είναι διαθέσιμη. Ανοίξτε τις ρυθμίσεις ομιλίας του Android και επιλέξτε το ReLoq C.</string>
     <string-array name="pause_modes">
         <item>Ποτέ</item>
         <item>Στο τέλος</item>
@@ -90,4 +90,34 @@
     <string name="pitch_hz_mode">Χρήση ύψους φωνής σε hertz</string>
     <string name="pitch_hz_value">Βασικό ύψος φωνής σε hertz</string>
     <string name="pitch_hz_error">Εισαγάγετε τιμή από 1 έως 24000 Hz.</string>
+    <string name="speed_scale">Κλίμακα μη αυτόματης ταχύτητας:</string>
+    <string name="speed_eci_mode">Ταχύτητα ECI (0–250)</string>
+    <string name="speed_wpm_mode">Λέξεις ανά λεπτό (1–6000)</string>
+    <string name="speed_eci_value">Μη αυτόματη ταχύτητα ECI</string>
+    <string name="speed_wpm_error">Εισαγάγετε μια τιμή από 1 έως 6000 λέξεις ανά λεπτό.</string>
+    <string name="pitch_scale">Κλίμακα μη αυτόματου τόνου:</string>
+    <string name="pitch_eci_mode">Τόνος ECI (0–100)</string>
+    <string name="equalizer">Ισοσταθμιστής</string>
+    <string name="equalizer_enabled">Ενεργοποίηση ισοσταθμιστή</string>
+    <string name="equalizer_preset">Προεπιλογή ισοσταθμιστή</string>
+    <string name="equalizer_low">Μπάσα (dB)</string>
+    <string name="equalizer_mid">Μεσαία (dB)</string>
+    <string name="equalizer_high">Πρίμα (dB)</string>
+    <string-array name="equalizer_presets"><item>Ισορροπημένο</item><item>Ζεστό</item><item>Φωτεινό</item><item>Απαλό</item><item>Προσαρμοσμένο</item></string-array>
+    <string name="equalizer_advanced">Προηγμένα φίλτρα…</string>
+    <string name="filter_title">Προηγμένα φίλτρα ισοσταθμιστή</string>
+    <string name="filter_select">Φίλτρο</string>
+    <string name="filter_name">Φίλτρο</string>
+    <string name="filter_enabled">Ενεργοποίηση φίλτρου</string>
+    <string name="filter_frequency">Συχνότητα (Hz)</string>
+    <string name="filter_gain">Ενίσχυση (dB)</string>
+    <string name="filter_width" formatted="false">Εύρος (% οκτάβας)</string>
+    <string name="filter_nyquist" formatted="false">Το 100% ισούται με μία οκτάβα. Συχνότητες από το μισό του ρυθμού δειγματοληψίας είναι ανενεργές.</string>
+    <string name="automatic_updates">Αυτόματος έλεγχος ενημερώσεων</string>
+    <string name="notification_settings">Ρυθμίσεις ειδοποιήσεων</string>
+    <string name="notification_explanation">Επιτρέψτε ειδοποιήσεις για τις νέες εκδόσεις του ReLoq C. Μπορείτε επίσης να ελέγξετε χειροκίνητα.</string>
+    <string name="allow_notifications">Να επιτρέπονται ειδοποιήσεις</string>
+    <string name="not_now">Όχι τώρα</string>
+    <string name="update_notification_title">Ενημερώσεις ReLoq C</string>
+    <string name="update_notification_body">Η έκδοση %1$s είναι διαθέσιμη. Πατήστε για έλεγχο και λήψη.</string>
 </resources>

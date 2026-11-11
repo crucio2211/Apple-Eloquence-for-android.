@@ -15,6 +15,8 @@ from verify_apk import verify_direct_boot_manifest
 
 ROOT=Path(__file__).resolve().parents[1]
 STUBS={
+"org/reloq/tts/UpdateScheduler.java": """package org.reloq.tts;
+final class UpdateScheduler { static void schedule(android.content.Context context) {} }""",
 "android/content/SharedPreferences.java": """package android.content;
 import java.util.Map;
 public interface SharedPreferences {
@@ -60,7 +62,7 @@ public class Context {
  public static final String ACTION_MY_PACKAGE_REPLACED="android.intent.action.MY_PACKAGE_REPLACED";
  private String action; public Intent(String a){action=a;} public String getAction(){return action;} }""",
 "android/media/AudioFormat.java": "package android.media; public class AudioFormat { public static final int ENCODING_PCM_16BIT=2; }",
-"android/util/Log.java": "package android.util; public class Log { public static int e(String a,String b,Throwable c){return 0;} }",
+"android/util/Log.java": "package android.util; public class Log { public static int e(String a,String b,Throwable c){return 0;} public static int w(String a,String b,Throwable c){return 0;} }",
 "android/speech/tts/TextToSpeech.java": """package android.speech.tts; public class TextToSpeech {
  public static final int SUCCESS=0, ERROR=-1, ERROR_INVALID_REQUEST=-8, ERROR_SYNTHESIS=-3, ERROR_SERVICE=-4,
  LANG_NOT_SUPPORTED=-2, LANG_COUNTRY_AVAILABLE=1, LANG_AVAILABLE=0; }""",
@@ -166,7 +168,9 @@ def main():
     service=manifest.find("application/service")
     assert service is not None and service.get(a+"name")==".ReLoqService"
     assert service.get(a+"directBootAware")=="true" and service.get(a+"exported")=="true"
-    assert [node.get(a+"name") for node in manifest.findall("uses-permission")]==["android.permission.INTERNET"]
+    assert [node.get(a+"name") for node in manifest.findall("uses-permission")]==[
+        "android.permission.INTERNET", "android.permission.ACCESS_NETWORK_STATE", "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.POST_NOTIFICATIONS"]
     for namespace,value in (("android","(type 0x12)0xffffffff"),
                             ("http://schemas.android.com/apk/res/android","true")):
         tree=(f"    E: service (line=9)\n      A: {namespace}:name=\".ReLoqService\"\n"
@@ -181,7 +185,8 @@ def main():
             target=build/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(content)
         folder=ROOT/"android/java/org/reloq/tts"
         sources=[folder/(name+".java") for name in ("Catalog","VoiceSettings","Preferences","BootPreferences",
-            "DictionaryData","BootDictionaries","UpgradeReceiver","PcmQueue","ReLoqService")]
+            "DictionaryData","BootDictionaries","UpgradeReceiver","PcmQueue","EmojiNames","EmojiProcessing",
+            "NumberProcessing","PunctSymbols","PunctuationProcessing","CamelCase","TextPipeline","RegexDictionaries","ReLoqService")]
         sources+=list(build.rglob("*.java"))
         subprocess.run([str(args.java_home/"bin/javac"),"-encoding","UTF-8","-d",str(build),*map(str,sources)],check=True)
         result=subprocess.run([str(args.java_home/"bin/java"),"-Djava.io.tmpdir="+str(build),"-cp",str(build),

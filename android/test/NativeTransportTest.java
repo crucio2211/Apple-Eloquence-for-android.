@@ -58,7 +58,7 @@ public final class NativeTransportTest {
             if(producer.get(5,TimeUnit.SECONDS)) throw new AssertionError("Cancelled output succeeded");
             render(0x10000,0,"Speech after cancellation.");
             VoiceSettings custom=new VoiceSettings(0);
-            custom.androidRate=false;custom.manualWpm=280;custom.androidPitch=false;custom.manualPitch=43;
+            custom.androidRate=false;custom.speedWpmMode=true;custom.manualWpm=280;custom.androidPitch=false;custom.manualPitch=43;
             custom.inflection=65;custom.volume=80;custom.head=22;custom.gender=1;custom.roughness=12;custom.breathiness=60;
             custom.rate=6;custom.pauses=2;custom.tags=true;
             render(0x10000,custom,"This is `vb70 a test `vb43 with 504 and 4004.");
@@ -77,6 +77,10 @@ public final class NativeTransportTest {
             render(0x40000,question,"Was möchtest du machen?");
             VoiceSettings mellow=new VoiceSettings(0);mellow.rate=6;mellow.mellowMode=true;
             render(0x40000,mellow,"Eine weiche Stimme zum Vergleichen.");
+            VoiceSettings eq=new VoiceSettings(0);eq.eqEnabled=true;eq.eqPreset=1;
+            eq.eqFilters[0]=new int[]{1,777,6,50};eq.eqFilters[1]=new int[]{1,3000,-4,150};
+            render(0x40000,eq,"Eine Stimme mit Equalizer.");render(0x10000,eq,"Equalizer test.");
+            eq.eqEnabled=false;render(0x40000,eq,"Eine Stimme mit Equalizer.");
             dictionary(arguments[0]);render(0x10000,0,"This is cancellationtoken.");
             render(0x40000,0,"Ich bin TokenX dir.");
             dictionary(arguments[1]);render(0x10000,0,"This is cancellationtoken.");

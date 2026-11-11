@@ -86,6 +86,16 @@ jobs:
           java -cp build/update-test org.reloq.tts.UpdateDataTest
           python3 android/test_versioning.py
 
+      - name: Test Android update scheduling and Direct Boot
+        run: |
+          python3 android/test_auto_updates.py --java-home "$JAVA_HOME"
+          python3 android/test_direct_boot.py --java-home "$JAVA_HOME"
+          python3 android/test_settings.py \
+            --java-home "$JAVA_HOME" \
+            --android-jar "$ANDROID_HOME/platforms/android-35/android.jar" \
+            --settings-only
+          python3 android/test_translations.py
+
       - name: Test EVDroid number, emoji, camel-case, regex, and punctuation processing
         run: |
           mkdir -p build/text-processing-test

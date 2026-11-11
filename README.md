@@ -12,7 +12,7 @@ This project is a feature-enhanced Android integration built on existing open-so
 |---|---|
 | Application name | Apple Eloquence |
 | Android package | `org.reloq.tts` |
-| Manifest version | `1.2.2` |
+| Manifest version | `1.2.3` |
 | Supported ABI | ARM64 (`arm64-v8a`) |
 | Minimum Android version | Android 8.0 (API 26) |
 | Android TTS integration | Selectable system speech engine |
@@ -44,14 +44,16 @@ Eight voice profiles are available: **Reed, Shelly, Bobby, Rocko, Glen, Sandy, G
 
 - Choose whether Android or the app controls language and voice.
 - Independent Android speech-rate and pitch controls.
-- Manual speed in words per minute, rate boost, and manual pitch.
-- Exact base-pitch entry in hertz.
+- Manual speed in either native ECI units (0–250) or native words per minute (1–6000), with rate boost.
+- Manual pitch in ECI units or exact base-pitch entry in hertz.
 - Voice-model controls for model, head size, roughness, and breathiness.
 - Inflection and voice-volume controls.
 - Seven sample rates: 8, 11.025, 16, 22.05, 32, 44.1, and 48 kHz.
 - Pause behavior, abbreviation expansion, phrase prediction, and optional ECI-tag processing.
 - Original question intonation for supported language profiles.
 - Optional mellow mode at supported output rates.
+- Optional equalizer with presets, custom bass/midrange/treble adjustment, and five advanced filters with configurable frequency, gain, and bandwidth.
+- Optional scheduled stable-release update checks with notification opt-in; the app continues to ignore prereleases and drafts.
 
 ### Text processing
 
@@ -93,7 +95,7 @@ For a stable update, increase `versionName` and `versionCode` in `android/Androi
 This project is an independent, feature-enhanced Android integration. It is not an official Apple application and is not affiliated with or endorsed by the upstream authors.
 
 - **[Mudb0y — Apple Eloquence ELF](https://github.com/Mudb0y/Apple-Eloquence-ELF)**: the Apple Eloquence ELF conversion project and its early Android integration scaffold. The project-authored converter code is MIT-licensed. Its license distinguishes that code from extracted or converted Apple binary artifacts, which remain subject to Apple's terms.
-- **[hozosch — ReLoq C](https://github.com/hozosch/Reloq-C)**: the Android application and native pronunciation/acoustic core used as the principal Android integration baseline. This repository's `android/reloq-core` submodule is pinned to upstream commit [`f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a`](https://github.com/hozosch/Reloq-C/commit/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a).
+- **[hozosch — ReLoq C](https://github.com/hozosch/Reloq-C)**: the Android application and native pronunciation/acoustic core used as the principal Android integration baseline. This repository's `android/reloq-core` submodule is pinned to upstream commit [`639b69eb51d0e05c51f6dcce62fb2004f32b9471`](https://github.com/hozosch/Reloq-C/commit/639b69eb51d0e05c51f6dcce62fb2004f32b9471).
 - **[NVDA-IBMTTS-Driver](https://github.com/davidacm/NVDA-IBMTTS-Driver)** and other upstream projects retain their own attribution and license terms wherever their code or data is used.
 
 The enhancements maintained here include EVDroid-compatible number, emoji, and punctuation processing, camel-case handling, regular-expression dictionary support, and the Android application's integration and update flow. Upstream code remains credited to its respective authors.
@@ -120,7 +122,7 @@ python3 android/build.py \
   --java-home "$JAVA_HOME" \
   --verified-dictionaries \
   --jobs 2 \
-  --output dist/reloq-c-android-arm64-1.2.2.apk
+  --output dist/reloq-c-android-arm64-1.2.3.apk
 ```
 
 See [Android implementation and build notes](android/README.md) for the source layout, build requirements, test commands, and release workflow.
@@ -130,7 +132,7 @@ See [Android implementation and build notes](android/README.md) for the source l
 Licensing is component-specific. The root MIT license does **not** replace the licenses of inherited or bundled components.
 
 - The project-authored Apple Eloquence ELF converter and related files are covered by the root MIT license, subject to its explicit binary-artifact and third-party notices.
-- The Android integration incorporates ReLoq C code, licensed under GPL-3.0-or-later. See the pinned upstream [LICENSE](https://github.com/hozosch/Reloq-C/blob/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a/LICENSE) and [NOTICE](https://github.com/hozosch/Reloq-C/blob/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a/NOTICE).
+- The Android integration incorporates ReLoq C code, licensed under GPL-3.0-or-later. See the pinned upstream [LICENSE](https://github.com/hozosch/Reloq-C/blob/639b69eb51d0e05c51f6dcce62fb2004f32b9471/LICENSE) and [NOTICE](https://github.com/hozosch/Reloq-C/blob/639b69eb51d0e05c51f6dcce62fb2004f32b9471/NOTICE).
 - The Apple Eloquence binary artifacts retain the restrictions and terms described in the upstream Apple Eloquence ELF license and notices.
 - Separately licensed third-party code and data retain their own license terms.
 

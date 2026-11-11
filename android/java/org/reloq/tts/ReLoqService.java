@@ -32,7 +32,13 @@ public final class ReLoqService extends TextToSpeechService {
     private String loadedRegexPath;
     private long loadedRegexModified = Long.MIN_VALUE;
 
-    @Override public void onCreate(){super.onCreate();startDictionariesIfUnlocked();}
+    @Override public void onCreate(){
+        super.onCreate();startDictionariesIfUnlocked();
+        new Thread(() -> {
+            try{UpdateScheduler.schedule(getApplicationContext());}
+            catch(RuntimeException error){Log.w("Apple Eloquence","Update scheduling failed",error);}
+        },"Apple Eloquence update scheduling").start();
+    }
 
     /** Never touch credential-protected files before the first unlock. */
     private boolean startDictionariesIfUnlocked() {

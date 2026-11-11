@@ -9,7 +9,7 @@
     <string name="download_update">ブラウザーでダウンロードを開く</string>
     <string name="update_failed">更新に失敗しました：%1$s</string>
     <string name="browser_update">ダウンロードを開きました。ブラウザーと Android の通常のインストール手順を使用してください。Play プロテクトは有効にしておいてください。</string>
-    <string name="engine_help">オフラインの音声合成です。テストする言語と音声を選ぶか、Android のテキスト読み上げ設定で Apple Eloquence を選んでください。</string>
+    <string name="engine_help">オフラインの音声合成です。テストする言語と音声を選ぶか、Android のテキスト読み上げ設定で ReLoq C を選んでください。</string>
     <string name="language">言語</string>
     <string name="profile">音声</string>
     <string name="sample_rate">サンプリング周波数</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Android の読み上げ設定</string>
     <string name="initializing">音声エンジンを初期化しています</string>
     <string name="ready">音声エンジンの準備ができました</string>
-    <string name="unavailable">音声エンジンを利用できません。Android の読み上げ設定を開き、Apple Eloquence を選んでください。</string>
+    <string name="unavailable">音声エンジンを利用できません。Android の読み上げ設定を開き、ReLoq C を選んでください。</string>
     <string-array name="pause_modes">
         <item>短くしない</item>
         <item>末尾のみ</item>
@@ -90,4 +90,34 @@
     <string name="pitch_hz_mode">音の高さをヘルツで設定</string>
     <string name="pitch_hz_value">基本音高（ヘルツ）</string>
     <string name="pitch_hz_error">1 から 24000 Hz の値を入力してください。</string>
+    <string name="speed_scale">手動速度のスケール:</string>
+    <string name="speed_eci_mode">ECI 速度 (0–250)</string>
+    <string name="speed_wpm_mode">1分あたりの単語数 (1–6000)</string>
+    <string name="speed_eci_value">手動 ECI 速度</string>
+    <string name="speed_wpm_error">1分あたり 1 から 6000 語の値を入力してください。</string>
+    <string name="pitch_scale">手動音程のスケール:</string>
+    <string name="pitch_eci_mode">ECI 音程 (0–100)</string>
+    <string name="equalizer">イコライザー</string>
+    <string name="equalizer_enabled">イコライザーを有効にする</string>
+    <string name="equalizer_preset">イコライザーのプリセット</string>
+    <string name="equalizer_low">低音 (dB)</string>
+    <string name="equalizer_mid">中音 (dB)</string>
+    <string name="equalizer_high">高音 (dB)</string>
+    <string-array name="equalizer_presets"><item>バランス</item><item>暖かい</item><item>明るい</item><item>滑らか</item><item>カスタム</item></string-array>
+    <string name="equalizer_advanced">詳細フィルター…</string>
+    <string name="filter_title">イコライザーの詳細フィルター</string>
+    <string name="filter_select">フィルター</string>
+    <string name="filter_name">フィルター</string>
+    <string name="filter_enabled">フィルターを有効にする</string>
+    <string name="filter_frequency">周波数 (Hz)</string>
+    <string name="filter_gain">ゲイン (dB)</string>
+    <string name="filter_width" formatted="false">帯域幅 (オクターブの%)</string>
+    <string name="filter_nyquist" formatted="false">100%は1オクターブです。サンプルレートの半分以上の周波数は無効です。</string>
+    <string name="automatic_updates">アプリの更新を自動的に確認</string>
+    <string name="notification_settings">通知の設定</string>
+    <string name="notification_explanation">新しい ReLoq C のバージョンを知るには通知を許可してください。手動で確認することもできます。</string>
+    <string name="allow_notifications">通知を許可</string>
+    <string name="not_now">後で</string>
+    <string name="update_notification_title">ReLoq C の更新</string>
+    <string name="update_notification_body">バージョン %1$s が利用可能です。タップして確認し、ダウンロードします。</string>
 </resources>

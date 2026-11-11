@@ -9,7 +9,7 @@
     <string name="download_update">Ouvrir le téléchargement dans le navigateur</string>
     <string name="update_failed">Échec de la mise à jour : %1$s</string>
     <string name="browser_update">Téléchargement ouvert. Utilisez le navigateur et la procédure d’installation habituelle d’Android. Gardez Play Protect activé.</string>
-    <string name="engine_help">Synthèse vocale hors connexion. Choisissez une langue et une voix à tester, ou sélectionnez ReLoq C dans les paramètres de synthèse vocale d’Android.</string>
+    <string name="engine_help">Synthèse vocale hors connexion. Choisissez une langue et une voix à tester, ou sélectionnez Apple Eloquence dans les paramètres de synthèse vocale d’Android.</string>
     <string name="language">Langue</string>
     <string name="profile">Voix</string>
     <string name="sample_rate">Fréquence d’échantillonnage</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Paramètres de synthèse vocale d’Android</string>
     <string name="initializing">Initialisation du moteur vocal</string>
     <string name="ready">Moteur vocal prêt</string>
-    <string name="unavailable">Moteur vocal indisponible. Ouvrez les paramètres de synthèse vocale d’Android et sélectionnez ReLoq C.</string>
+    <string name="unavailable">Moteur vocal indisponible. Ouvrez les paramètres de synthèse vocale d’Android et sélectionnez Apple Eloquence.</string>
     <string-array name="pause_modes">
         <item>Jamais</item>
         <item>À la fin</item>

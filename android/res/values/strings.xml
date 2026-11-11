@@ -9,8 +9,8 @@
     <string name="download_update">Open download in browser</string>
     <string name="update_failed">Update failed: %1$s</string>
     <string name="browser_update">Download opened. Use your browser and Android’s normal installation flow. Keep Play Protect enabled.</string>
-    <string name="app_name">ReLoq C</string>
-    <string name="engine_help">Offline speech synthesis. Choose a language and voice to test, or select ReLoq C in Android text-to-speech settings.</string>
+    <string name="app_name">Apple Eloquence</string>
+    <string name="engine_help">Offline speech synthesis. Choose a language and voice to test, or select Apple Eloquence in Android text-to-speech settings.</string>
     <string name="language">Language</string>
     <string name="profile">Voice</string>
     <string name="sample_rate">Sample rate</string>
@@ -21,7 +21,7 @@
     <string name="system_settings">Android speech settings</string>
     <string name="initializing">Initializing speech engine</string>
     <string name="ready">Speech engine ready</string>
-    <string name="unavailable">Speech engine unavailable. Open Android speech settings and select ReLoq C.</string>
+    <string name="unavailable">Speech engine unavailable. Open Android speech settings and select Apple Eloquence.</string>
     <string-array name="pause_modes">
         <item>Never</item>
         <item>At the end</item>
@@ -116,9 +116,9 @@
     <string name="filter_nyquist" formatted="false">100% is one octave. Frequencies at or above half the sample rate are inactive.</string>
     <string name="automatic_updates">Automatically check for app updates</string>
     <string name="notification_settings">Notification settings</string>
-    <string name="notification_explanation">Allow notifications to be informed about new ReLoq C versions. You can still check manually without notifications.</string>
+    <string name="notification_explanation">Allow notifications to be informed about new Apple Eloquence versions. You can still check manually without notifications.</string>
     <string name="allow_notifications">Allow notifications</string>
     <string name="not_now">Not now</string>
-    <string name="update_notification_title">ReLoq C updates</string>
+    <string name="update_notification_title">Apple Eloquence updates</string>
     <string name="update_notification_body">Version %1$s is available. Tap to review and download.</string>
 </resources>

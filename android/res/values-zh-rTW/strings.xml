@@ -9,7 +9,7 @@
     <string name="download_update">在瀏覽器中開啟下載</string>
     <string name="update_failed">更新失敗：%1$s</string>
     <string name="browser_update">已開啟下載。請使用瀏覽器和 Android 的一般安裝流程。請保持 Play 安全防護啟用。</string>
-    <string name="engine_help">離線語音合成。選擇語言和聲音進行測試，或在 Android 的文字轉語音設定中選擇 Apple Eloquence。</string>
+    <string name="engine_help">離線語音合成。選擇語言和聲音進行測試，或在 Android 的文字轉語音設定中選擇 ReLoq C。</string>
     <string name="language">語言</string>
     <string name="profile">聲音</string>
     <string name="sample_rate">取樣率</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Android 語音設定</string>
     <string name="initializing">正在初始化語音引擎</string>
     <string name="ready">語音引擎已就緒</string>
-    <string name="unavailable">語音引擎無法使用。請開啟 Android 語音設定並選擇 Apple Eloquence。</string>
+    <string name="unavailable">語音引擎無法使用。請開啟 Android 語音設定並選擇 ReLoq C。</string>
     <string-array name="pause_modes">
         <item>從不</item>
         <item>僅在結尾</item>
@@ -90,4 +90,34 @@
     <string name="pitch_hz_mode">以赫茲設定音高</string>
     <string name="pitch_hz_value">基準音高（赫茲）</string>
     <string name="pitch_hz_error">請輸入 1 到 24000 Hz 的值。</string>
+    <string name="speed_scale">手動語速刻度：</string>
+    <string name="speed_eci_mode">ECI 語速 (0–250)</string>
+    <string name="speed_wpm_mode">每分鐘詞數 (1–6000)</string>
+    <string name="speed_eci_value">手動 ECI 語速</string>
+    <string name="speed_wpm_error">請輸入每分鐘 1 到 6000 個詞。</string>
+    <string name="pitch_scale">手動音高刻度：</string>
+    <string name="pitch_eci_mode">ECI 音高 (0–100)</string>
+    <string name="equalizer">等化器</string>
+    <string name="equalizer_enabled">啟用等化器</string>
+    <string name="equalizer_preset">等化器預設</string>
+    <string name="equalizer_low">低音 (dB)</string>
+    <string name="equalizer_mid">中音 (dB)</string>
+    <string name="equalizer_high">高音 (dB)</string>
+    <string-array name="equalizer_presets"><item>平衡</item><item>溫暖</item><item>明亮</item><item>柔和</item><item>自訂</item></string-array>
+    <string name="equalizer_advanced">進階濾波器…</string>
+    <string name="filter_title">進階等化器濾波器</string>
+    <string name="filter_select">濾波器</string>
+    <string name="filter_name">濾波器</string>
+    <string name="filter_enabled">啟用濾波器</string>
+    <string name="filter_frequency">頻率 (Hz)</string>
+    <string name="filter_gain">增益 (dB)</string>
+    <string name="filter_width" formatted="false">頻寬（八度百分比）</string>
+    <string name="filter_nyquist" formatted="false">100% 為一個八度。達到或超過取樣率一半的頻率不會生效。</string>
+    <string name="automatic_updates">自動檢查應用程式更新</string>
+    <string name="notification_settings">通知設定</string>
+    <string name="notification_explanation">允許通知以得知 ReLoq C 的新版本。也可以手動檢查更新。</string>
+    <string name="allow_notifications">允許通知</string>
+    <string name="not_now">暫不</string>
+    <string name="update_notification_title">ReLoq C 更新</string>
+    <string name="update_notification_body">版本 %1$s 已推出。點選以檢視並下載。</string>
 </resources>

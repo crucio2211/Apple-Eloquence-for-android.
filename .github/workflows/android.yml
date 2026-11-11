@@ -2,7 +2,7 @@ name: Android APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, release/v1.2.3]
     tags:
       - 'v*'
     paths:
@@ -149,10 +149,10 @@ jobs:
           gh release upload "$RELEASE_TAG" "$APK_PATH" --repo "$GITHUB_REPOSITORY" --clobber
 
       - name: Publish stable Android APK to the matching GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/release/v1.2.3'
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v1.2.3' }}
           APK_PATH: dist/${{ steps.version.outputs.apk_name }}
         run: |
           set -euo pipefail

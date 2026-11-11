@@ -38,6 +38,36 @@ compression threshold, number-processing switch and grouping mode, and
 punctuation switch and level. Preferences persist in the app's existing
 `settings` SharedPreferences file.
 
+## App updates
+
+The Android Settings screen's **App updates** action checks the GitHub Releases
+API for this repository:
+
+`https://api.github.com/repos/crucio2211/Apple-Eloquence-ELF/releases?per_page=30`
+
+The updater accepts only ARM64 APK assets named
+`reloq-c-android-arm64-MAJOR.MINOR.PATCH.apk`, whose download URLs belong to
+this repository and whose GitHub asset metadata includes a SHA-256 digest.
+It compares the semantic version with the installed Android `versionCode`.
+When a newer package is found, it opens the GitHub asset in the browser; the
+user completes the download and Android's normal installation flow.
+
+To publish an Android update:
+
+1. Set `android/AndroidManifest.xml`'s `versionName` to the next
+   `MAJOR.MINOR.PATCH` release and keep `versionCode` increasing.
+2. Push a matching tag such as `v1.2.3`.
+3. The Android workflow checks that the tag matches `versionName`, builds
+   `reloq-c-android-arm64-1.2.3.apk`, and uploads it to that tag's GitHub
+   Release. The desktop release workflow can add its Linux tarballs to the
+   same release.
+
+**Repository visibility:** the updater makes an unauthenticated HTTPS request
+from the installed app and does not contain a GitHub token. Therefore this
+repository must be public for app users to read its Releases API and download
+release assets. Keeping it private makes the check return an authorization/not
+found response. Do not embed a personal access token in the APK.
+
 ## Build
 
 The GitHub Actions Android workflow checks out the pinned submodule and builds
@@ -53,7 +83,7 @@ python3 android/build.py \
   --java-home "$JAVA_HOME" \
   --verified-dictionaries \
   --jobs 2 \
-  --output dist/reloq-c-android-arm64.apk
+  --output dist/reloq-c-android-arm64-1.2.2.apk
 ```
 
 The included P12 is the upstream test signing key. It is not a production

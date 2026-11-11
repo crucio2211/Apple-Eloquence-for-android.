@@ -18,7 +18,7 @@ public final class SettingsActivity extends Activity {
     private boolean ready;
     private LinearLayout content;
     private Spinner languages,profiles,rates,pauses,models;
-    private CheckBox androidVoice,androidRate,androidPitch,pitchHertzMode,boost,tags,abbreviations,prediction,originalQuestions,mellowMode,speakEmoji,numberProcessing,punctProcessing;
+    private CheckBox androidVoice,androidRate,androidPitch,pitchHertzMode,boost,tags,abbreviations,prediction,originalQuestions,mellowMode,speakEmoji,numberProcessing,splitCamelCase,punctProcessing;
     private Spinner emojiCompress,numberMode,punctLevel;
     private Numeric speed,pitch,inflection,volume,head,roughness,breathiness;
     private EditText text,pitchHertzInput;

@@ -186,7 +186,7 @@ def main():
         folder=ROOT/"android/java/org/reloq/tts"
         sources=[folder/(name+".java") for name in ("Catalog","VoiceSettings","Preferences","BootPreferences",
             "DictionaryData","BootDictionaries","UpgradeReceiver","PcmQueue","EmojiNames","EmojiProcessing",
-            "NumberProcessing","PunctSymbols","PunctuationProcessing","CamelCase","TextPipeline","RegexDictionaries","ReLoqService")]
+            "NumberProcessing","PunctSymbols","PunctuationProcessing","SymbolWords","CamelCase","TextPipeline","RegexDictionaries","ReLoqService")]
         sources+=list(build.rglob("*.java"))
         subprocess.run([str(args.java_home/"bin/javac"),"-encoding","UTF-8","-d",str(build),*map(str,sources)],check=True)
         result=subprocess.run([str(args.java_home/"bin/java"),"-Djava.io.tmpdir="+str(build),"-cp",str(build),

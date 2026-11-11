@@ -96,7 +96,7 @@ jobs:
             --settings-only
           python3 android/test_translations.py
 
-      - name: Test EVDroid number, emoji, camel-case, regex, and punctuation processing
+      - name: Test EVDroid number, emoji, camel-case, regex, symbol words, and punctuation processing
         run: |
           mkdir -p build/text-processing-test
           javac -encoding UTF-8 -d build/text-processing-test \
@@ -105,6 +105,7 @@ jobs:
             android/java/org/reloq/tts/NumberProcessing.java \
             android/java/org/reloq/tts/PunctSymbols.java \
             android/java/org/reloq/tts/PunctuationProcessing.java \
+            android/java/org/reloq/tts/SymbolWords.java \
             android/java/org/reloq/tts/CamelCase.java \
             android/java/org/reloq/tts/RegexDictionaries.java \
             android/java/org/reloq/tts/TextPipeline.java \
@@ -146,7 +147,6 @@ jobs:
             gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
               --title "$TITLE" --notes "$NOTES" --prerelease
           fi
-          # Remove the upstream-named APKs so release downloads use Apple Eloquence branding only.
           gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' |
             while IFS= read -r asset; do
               case "$asset" in
@@ -173,7 +173,6 @@ jobs:
               --title "Apple Eloquence $RELEASE_TAG" \
               --notes "Stable Android ARM64 release. Download the APK and follow Android's normal installation flow."
           fi
-          # Remove the upstream-named APKs so release downloads use Apple Eloquence branding only.
           gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' |
             while IFS= read -r asset; do
               case "$asset" in

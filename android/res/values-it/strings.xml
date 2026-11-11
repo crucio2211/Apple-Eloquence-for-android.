@@ -9,7 +9,7 @@
     <string name="download_update">Apri il download nel browser</string>
     <string name="update_failed">Aggiornamento non riuscito: %1$s</string>
     <string name="browser_update">Download aperto. Usa il browser e la normale procedura di installazione di Android. Mantieni Play Protect attivo.</string>
-    <string name="engine_help">Sintesi vocale offline. Scegli una lingua e una voce da provare, oppure seleziona ReLoq C nelle impostazioni di sintesi vocale di Android.</string>
+    <string name="engine_help">Sintesi vocale offline. Scegli una lingua e una voce da provare, oppure seleziona Apple Eloquence nelle impostazioni di sintesi vocale di Android.</string>
     <string name="language">Lingua</string>
     <string name="profile">Voce</string>
     <string name="sample_rate">Frequenza di campionamento</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Impostazioni vocali di Android</string>
     <string name="initializing">Avvio del motore vocale</string>
     <string name="ready">Motore vocale pronto</string>
-    <string name="unavailable">Motore vocale non disponibile. Apri le impostazioni vocali di Android e seleziona ReLoq C.</string>
+    <string name="unavailable">Motore vocale non disponibile. Apri le impostazioni vocali di Android e seleziona Apple Eloquence.</string>
     <string-array name="pause_modes">
         <item>Mai</item>
         <item>Alla fine</item>
@@ -115,9 +115,9 @@
     <string name="filter_nyquist" formatted="false">Il 100% equivale a un’ottava. Le frequenze dalla metà del campionamento non sono attive.</string>
     <string name="automatic_updates">Cerca automaticamente aggiornamenti</string>
     <string name="notification_settings">Impostazioni notifiche</string>
-    <string name="notification_explanation">Consenti le notifiche per ricevere informazioni sulle nuove versioni di ReLoq C. Puoi cercare anche manualmente.</string>
+    <string name="notification_explanation">Consenti le notifiche per ricevere informazioni sulle nuove versioni di Apple Eloquence. Puoi cercare anche manualmente.</string>
     <string name="allow_notifications">Consenti notifiche</string>
     <string name="not_now">Non ora</string>
-    <string name="update_notification_title">Aggiornamenti di ReLoq C</string>
+    <string name="update_notification_title">Aggiornamenti di Apple Eloquence</string>
     <string name="update_notification_body">La versione %1$s è disponibile. Tocca per esaminare e scaricare.</string>
 </resources>

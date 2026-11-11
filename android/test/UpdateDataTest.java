@@ -12,6 +12,10 @@ public final class UpdateDataTest {
         String digest="sha256:"+hash.toUpperCase(java.util.Locale.ROOT);
         require(UpdateData.REPOSITORY.equals("crucio2211/Apple-Eloquence-for-android."));
         require(UpdateData.RELEASES.equals("https://api.github.com/repos/crucio2211/Apple-Eloquence-for-android./releases?per_page=30"));
+        require(UpdateData.isEligibleRelease(false,false));
+        require(!UpdateData.isEligibleRelease(false,true));
+        require(!UpdateData.isEligibleRelease(true,false));
+        require(!UpdateData.isEligibleRelease(true,true));
         String name="reloq-c-android-arm64-0.2.197.apk";
         String url="https://github.com/crucio2211/Apple-Eloquence-for-android./releases/download/v0.2.197/"+name;
         UpdateData.Package data=UpdateData.candidate(name,url,18000000,digest,20196);

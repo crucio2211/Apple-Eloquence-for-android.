@@ -53,7 +53,8 @@ public final class UpdateActivity extends Activity {
         }
         JSONArray releases=new JSONArray(bytes.toString("UTF-8"));UpdateData.Package best=null;
         for(int i=0;i<releases.length();++i) {
-            JSONObject release=releases.getJSONObject(i);if(release.optBoolean("draft"))continue;
+            JSONObject release=releases.getJSONObject(i);
+            if(!UpdateData.isEligibleRelease(release.optBoolean("draft"),release.optBoolean("prerelease")))continue;
             JSONArray assets=release.optJSONArray("assets");if(assets==null)continue;
             for(int a=0;a<assets.length();++a) {
                 JSONObject asset=assets.getJSONObject(a);
@@ -75,7 +76,7 @@ public final class UpdateActivity extends Activity {
                     status.setText(found==null?getString(R.string.no_published_update):getString(R.string.version_available,found.version));
                 });
             } catch(Exception e) {runOnUiThread(() -> {if(!closed){action.setEnabled(true);status.setText(getString(R.string.update_failed,e.getMessage()));}});}
-        },"ReLoq package update");worker.start();
+        },"Apple Eloquence package update");worker.start();
     }
     private void openDownload() {
         try {

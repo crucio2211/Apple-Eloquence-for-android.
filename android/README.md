@@ -75,23 +75,32 @@ The **App updates** activity checks this repository's GitHub Releases API:
 
 `https://api.github.com/repos/crucio2211/Apple-Eloquence-for-android./releases?per_page=30`
 
-The activity reads published release metadata, rejects drafts and invalid APK assets, checks the ARM64 APK filename, version, repository download URL, file size, and GitHub-provided SHA-256 metadata, then compares the candidate version with the installed Android `versionCode`.
+The activity reads published release metadata, rejects drafts and prereleases, validates the ARM64 APK filename, version, repository download URL, file size, and GitHub-provided SHA-256 metadata, then compares the candidate version with the installed Android `versionCode`.
 
-When a newer package is available, the app opens the asset in the browser. The browser downloads it and Android's normal package installation flow handles installation. The app does not silently install packages and does not embed a GitHub personal access token.
+When a newer stable package is available, the app opens the asset in the browser. The browser downloads it and Android's normal package installation flow handles installation. The app does not silently install packages and does not embed a GitHub personal access token.
 
-### Publishing an Android update
+### Automatic build publishing
+
+Every successful Android build on `main` (including a manual workflow run started on `main`) does both of the following:
+
+1. Uploads the APK as a GitHub Actions artifact retained for 14 days.
+2. Creates or updates the rolling GitHub prerelease tagged `android-main`, replacing its APK asset with the newest successful main build.
+
+This rolling prerelease is intended for testing and is deliberately ignored by the in-app stable update checker. Pull-request builds and diagnostic/test artifacts are not published as end-user Releases.
+
+### Publishing a stable Android update
 
 1. Update `versionName` and increase `versionCode` in `AndroidManifest.xml`.
 2. Push a matching tag, for example `v1.2.3`.
-3. The Android workflow verifies that the tag matches `versionName`, builds `reloq-c-android-arm64-1.2.3.apk`, and uploads the APK to the matching GitHub Release.
+3. The Android workflow verifies that the tag matches `versionName`, builds `reloq-c-android-arm64-1.2.3.apk`, and uploads it to the stable GitHub Release tagged `v1.2.3`.
 
-The release page is [Apple Eloquence for Android — GitHub Releases](https://github.com/crucio2211/Apple-Eloquence-for-android./releases). Desktop release assets are not part of this Android distribution flow.
+The release page is [Apple Eloquence for Android — GitHub Releases](https://github.com/crucio2211/Apple-Eloquence-for-android./releases). The installed app checks stable releases only; the rolling `android-main` testing prerelease is not offered as a normal app update.
 
 The installed app makes an unauthenticated HTTPS request. The release repository must remain public for users to access its Releases API and APK assets. Do not place a personal access token in the APK.
 
 ## Build requirements
 
-A Linux x86-64 build host is currently used by the automated workflow. Required tools:
+The automated Android APK build runs on an Ubuntu 24.04 x86-64 GitHub Actions runner. Required tools for a local build:
 
 - Python 3
 - GNU Make
@@ -122,15 +131,18 @@ Omit `--verified-dictionaries` when the build should independently refresh the c
 
 ## Automated Android workflow
 
-The workflow at `.github/workflows/android.yml` runs for relevant pushes, pull requests, and manual dispatches. It:
+The workflow at `.github/workflows/android.yml` runs for relevant pushes, pull requests, matching version tags, and manual dispatches. It:
 
 1. Checks out the repository and pinned submodule.
 2. Sets up JDK 17, Android SDK Platform 35, Build Tools 35.0.1, and NDK 30.0.16248370.
-3. Tests app-update metadata and version ordering.
+3. Tests app-update metadata, stable-versus-prerelease filtering, and version ordering.
 4. Runs the Android text-processing regression tests.
 5. Builds and verifies the signed ARM64 APK.
-6. Uploads the APK as a workflow artifact.
-7. For a matching `vMAJOR.MINOR.PATCH` tag, publishes the versioned APK to the corresponding GitHub Release.
+6. Uploads the APK as a 14-day workflow artifact.
+7. On successful builds from `main`, publishes or replaces the APK in the rolling `android-main` prerelease.
+8. On a matching `vMAJOR.MINOR.PATCH` tag, publishes the APK to that stable versioned Release.
+
+The separate `.github/workflows/bionic-lab.yml` workflow is a manual diagnostic workflow. Its temporary test libraries and system images remain Actions artifacts and are not distributed as app releases.
 
 A successful host-side build and test run does not replace installation, TalkBack accessibility, or speech testing on a physical ARM64 Android device.
 

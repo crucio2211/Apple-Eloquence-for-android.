@@ -9,7 +9,7 @@
     <string name="download_update">Abrir descarga en el navegador</string>
     <string name="update_failed">Error al actualizar: %1$s</string>
     <string name="browser_update">Se ha abierto la descarga. Usa el navegador y el proceso de instalación habitual de Android. Mantén Play Protect activado.</string>
-    <string name="engine_help">Síntesis de voz sin conexión. Elige un idioma y una voz para probarlos, o selecciona ReLoq C en los ajustes de texto a voz de Android.</string>
+    <string name="engine_help">Síntesis de voz sin conexión. Elige un idioma y una voz para probarlos, o selecciona Apple Eloquence en los ajustes de texto a voz de Android.</string>
     <string name="language">Idioma</string>
     <string name="profile">Voz</string>
     <string name="sample_rate">Frecuencia de muestreo</string>
@@ -20,7 +20,7 @@
     <string name="system_settings">Ajustes de voz de Android</string>
     <string name="initializing">Iniciando el motor de voz</string>
     <string name="ready">Motor de voz preparado</string>
-    <string name="unavailable">El motor de voz no está disponible. Abre los ajustes de voz de Android y selecciona ReLoq C.</string>
+    <string name="unavailable">El motor de voz no está disponible. Abre los ajustes de voz de Android y selecciona Apple Eloquence.</string>
     <string-array name="pause_modes">
         <item>Nunca</item>
         <item>Al final</item>

@@ -27,7 +27,10 @@ public final class ReLoqService extends TextToSpeechService {
     private boolean dictionariesStarted,legacyFilesCleaned;
     private Future<?> dictionaryStartup;
     private volatile PcmQueue active;
-    private volatile Catalog.Language selected = Catalog.LANGUAGES[3];\n    private RegexDictionaries.Loaded loadedRegex;\n    private String loadedRegexPath;\n    private long loadedRegexModified = Long.MIN_VALUE;
+    private volatile Catalog.Language selected = Catalog.LANGUAGES[3];
+    private RegexDictionaries.Loaded loadedRegex;
+    private String loadedRegexPath;
+    private long loadedRegexModified = Long.MIN_VALUE;\n    private RegexDictionaries.Loaded loadedRegex;\n    private String loadedRegexPath;\n    private long loadedRegexModified = Long.MIN_VALUE;
 
     @Override public void onCreate(){super.onCreate();startDictionariesIfUnlocked();}
 
@@ -129,8 +132,10 @@ public final class ReLoqService extends TextToSpeechService {
             VoiceSettings.bounded(preferences.getInt("emojiCompress",3),2,5),
             preferences.getBoolean("numberProcessing",false),
             VoiceSettings.bounded(preferences.getInt("numberMode",0),0,3),
+            preferences.getBoolean("splitCamelCase",true),
             preferences.getBoolean("punctProcessing",false),
             VoiceSettings.bounded(preferences.getInt("punctLevel",2),0,3));
+        processed=applyRegexDictionary(preferences,processed);
         byte[] utf8=processed.getBytes(StandardCharsets.UTF_8);
         PcmQueue queue=new PcmQueue(16);
         active=queue;

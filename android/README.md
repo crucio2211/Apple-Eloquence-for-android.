@@ -7,7 +7,7 @@ Apple Eloquence for Android is an ARM64 Android application and system Text-to-S
 This Android implementation is a feature-enhanced adaptation of existing open-source work. It does not claim that the underlying ECI engine or all Android application components were independently created here.
 
 - **[Mudb0y/Apple-Eloquence-ELF](https://github.com/Mudb0y/Apple-Eloquence-ELF)** — the Apple Eloquence ELF conversion project and its early Android integration scaffold. Its project-authored converter code is MIT-licensed. Its license separately describes Apple's extracted and converted binary artifacts, which remain subject to Apple's terms.
-- **[hozosch/ReLoq-C](https://github.com/hozosch/Reloq-C)** — the Android application and native pronunciation/acoustic core used as the principal integration baseline. The `reloq-core` submodule is pinned to upstream commit [`f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a`](https://github.com/hozosch/Reloq-C/commit/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a). ReLoq C's original code is GPL-3.0-or-later; see its upstream [LICENSE](https://github.com/hozosch/Reloq-C/blob/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a/LICENSE) and [NOTICE](https://github.com/hozosch/Reloq-C/blob/f6a1498b97d3fbf6fcb07fdb16c34ff73f44859a/NOTICE).
+- **[hozosch/ReLoq-C](https://github.com/hozosch/Reloq-C)** — the Android application and native pronunciation/acoustic core used as the principal integration baseline. The `reloq-core` submodule is pinned to upstream commit [`639b69eb51d0e05c51f6dcce62fb2004f32b9471`](https://github.com/hozosch/Reloq-C/commit/639b69eb51d0e05c51f6dcce62fb2004f32b9471). ReLoq C's original code is GPL-3.0-or-later; see its upstream [LICENSE](https://github.com/hozosch/Reloq-C/blob/639b69eb51d0e05c51f6dcce62fb2004f32b9471/LICENSE) and [NOTICE](https://github.com/hozosch/Reloq-C/blob/639b69eb51d0e05c51f6dcce62fb2004f32b9471/NOTICE).
 - **[NVDA-IBMTTS-Driver](https://github.com/davidacm/NVDA-IBMTTS-Driver)** and other referenced projects retain their own attribution and license terms wherever their work is incorporated.
 
 The enhancements maintained in this repository include EVDroid-compatible number, emoji, and punctuation processing, camel-case handling, regular-expression dictionary support, and the Android application's integration and update flow. Upstream components remain credited to their respective authors. These links are source attributions, not statements of official affiliation or endorsement.
@@ -18,7 +18,7 @@ The enhancements maintained in this repository include EVDroid-compatible number
 |---|---|
 | Application | Apple Eloquence |
 | Package name | `org.reloq.tts` |
-| Manifest version | `1.2.2` |
+| Manifest version | `1.2.3` |
 | ABI | ARM64 (`arm64-v8a`) |
 | Minimum Android API | 26 (Android 8.0) |
 | Target Android API | 35 |
@@ -54,9 +54,11 @@ The settings app provides:
 
 - Android-controlled or app-controlled language and voice.
 - Independent Android rate and pitch control.
-- Manual speed, rate boost, manual pitch, and base pitch in hertz.
+- Manual speed can use either native ECI units (0–250) or native words per minute (1–6000); Android-controlled speed remains independent. Rate boost is available.
+- Manual pitch can use the ECI scale or an exact base frequency in hertz (1–24,000), independently of Android pitch control.
 - Eight voice profiles with model, head-size, roughness, breathiness, inflection, and volume controls.
 - Output sample rates of 8, 11.025, 16, 22.05, 32, 44.1, and 48 kHz.
+- An optional equalizer with Balanced, Warm, Bright, Smooth, and Custom presets; five independently configurable filters provide frequency, gain, and bandwidth controls. EQ is off by default and frequencies at or above the Nyquist limit are inactive.
 - Pause behavior, abbreviation dictionary, phrase prediction, ECI tags, original question intonation, and mellow mode.
 
 Changes are saved as settings are adjusted. The app includes a speech test field and Stop button. To use the service system-wide, select **Apple Eloquence** in Android's Text-to-speech settings.
@@ -75,7 +77,7 @@ The **App updates** activity checks this repository's GitHub Releases API:
 
 `https://api.github.com/repos/crucio2211/Apple-Eloquence-for-android./releases?per_page=30`
 
-The activity reads published release metadata, rejects drafts and prereleases, validates the ARM64 APK filename, version, repository download URL, file size, and GitHub-provided SHA-256 metadata, then compares the candidate version with the installed Android `versionCode`.
+The activity reads published release metadata, rejects drafts and prereleases, validates the ARM64 APK filename, version, repository download URL, file size, and GitHub-provided SHA-256 metadata, then compares the candidate version with the installed Android `versionCode`. An optional background checker uses Android JobScheduler to check over any network, with a periodic schedule and a first check; users can disable automatic checks. On Android 13 and later, notifications require the user's notification permission. Tapping an update notice opens the update screen and browser-based download flow.
 
 When a newer stable package is available, the app opens the asset in the browser. The browser downloads it and Android's normal package installation flow handles installation. The app does not silently install packages and does not embed a GitHub personal access token.
 
@@ -124,7 +126,7 @@ python3 android/build.py \
   --java-home "$JAVA_HOME" \
   --verified-dictionaries \
   --jobs 2 \
-  --output dist/reloq-c-android-arm64-1.2.2.apk
+  --output dist/reloq-c-android-arm64-1.2.3.apk
 ```
 
 Omit `--verified-dictionaries` when the build should independently refresh the current community dictionary data rather than use an already verified local snapshot. The build script creates the native ARM64 library, generates Java sources, compiles and packages the application, signs the APK, and validates its install-critical resources, signatures, ZIP alignment, and ARM64 ELF layout.

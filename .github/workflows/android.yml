@@ -73,7 +73,7 @@ jobs:
               exit 1
             fi
           fi
-          APK_NAME="reloq-c-android-arm64-${VERSION}.apk"
+          APK_NAME="apple-eloquence-android-arm64-${VERSION}.apk"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "apk_name=$APK_NAME" >> "$GITHUB_OUTPUT"
 

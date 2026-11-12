@@ -18,7 +18,7 @@ The enhancements maintained in this repository include EVDroid-compatible number
 |---|---|
 | Application | Apple Eloquence |
 | Package name | `org.reloq.tts` |
-| Manifest version | `1.2.4` |
+| Manifest version | `1.2.5` |
 | ABI | ARM64 (`arm64-v8a`) |
 | Minimum Android API | 26 (Android 8.0) |
 | Target Android API | 35 |
@@ -95,8 +95,8 @@ This rolling prerelease is intended for testing and is deliberately ignored by t
 ### Publishing a stable Android update
 
 1. Update `versionName` and increase `versionCode` in `AndroidManifest.xml`.
-2. Push a matching tag, for example `v1.2.4`.
-3. The Android workflow verifies that the tag matches `versionName`, builds `apple-eloquence-android-arm64-1.2.4.apk`, and uploads it to the stable GitHub Release tagged `v1.2.4`.
+2. Push a matching tag, for example `v1.2.5`.
+3. The Android workflow verifies that the tag matches `versionName`, builds `apple-eloquence-android-arm64-1.2.5.apk`, and uploads it to the stable GitHub Release tagged `v1.2.5`.
 
 The release page is [Apple Eloquence for Android — GitHub Releases](https://github.com/crucio2211/Apple-Eloquence-for-android./releases). The installed app checks stable releases only; the rolling `android-main` testing prerelease is not offered as a normal app update.
 
@@ -128,7 +128,7 @@ python3 android/build.py \
   --java-home "$JAVA_HOME" \
   --verified-dictionaries \
   --jobs 2 \
-  --output dist/apple-eloquence-android-arm64-1.2.4.apk
+  --output dist/apple-eloquence-android-arm64-1.2.5.apk
 ```
 
 Omit `--verified-dictionaries` when the build should independently refresh the current community dictionary data rather than use an already verified local snapshot. The build script creates the native ARM64 library, generates Java sources, compiles and packages the application, signs the APK, and validates its install-critical resources, signatures, ZIP alignment, and ARM64 ELF layout.

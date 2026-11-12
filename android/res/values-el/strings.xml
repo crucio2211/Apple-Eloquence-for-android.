@@ -120,4 +120,9 @@
     <string name="not_now">Όχι τώρα</string>
     <string name="update_notification_title">Ενημερώσεις Apple Eloquence</string>
     <string name="update_notification_body">Η έκδοση %1$s είναι διαθέσιμη. Πατήστε για έλεγχο και λήψη.</string>
+    <string name="original_acoustic_clock">Use original Eloquence acoustic timing for the selected language (5 ms)</string>
+    <string name="dictionary_format">Dictionary file format</string>
+    <string name="dictionary_voice">Voices for NVDA dictionaries</string>
+    <string name="dictionary_all_voices">All voices</string>
+    <string-array name="dictionary_formats"><item>Detect automatically</item><item>NVDA</item><item>Eloquence</item></string-array>
 </resources>

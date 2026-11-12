@@ -18,7 +18,7 @@ The enhancements maintained in this repository include EVDroid-compatible number
 |---|---|
 | Application | Apple Eloquence |
 | Package name | `org.reloq.tts` |
-| Manifest version | `1.2.4` |
+| Manifest version | `1.2.5` |
 | ABI | ARM64 (`arm64-v8a`) |
 | Minimum Android API | 26 (Android 8.0) |
 | Target Android API | 35 |
@@ -59,15 +59,17 @@ The settings app provides:
 - Eight voice profiles with model, head-size, roughness, breathiness, inflection, and volume controls.
 - Output sample rates of 8, 11.025, 16, 22.05, 32, 44.1, and 48 kHz.
 - An optional equalizer with Balanced, Warm, Bright, Smooth, and Custom presets; five independently configurable filters provide frequency, gain, and bandwidth controls. EQ is off by default and frequencies at or above the Nyquist limit are inactive.
-- Pause behavior, abbreviation dictionary, phrase prediction, ECI tags, original question intonation, and mellow mode.
+- Pause behavior, abbreviation dictionary, phrase prediction, ECI tags, original question intonation, and mellow mode. **Use original Eloquence acoustic timing (5 ms)** can be selected per language; Castilian Spanish and Greek default to the original 5 ms clock, while other languages retain the 1 ms clock unless changed.
 
 Changes are saved as settings are adjusted. The app includes a speech test field and Stop button. To use the service system-wide, select **Apple Eloquence** in Android's Text-to-speech settings.
 
 ## Pronunciation dictionaries
 
-The dictionary manager handles native Main, Root, and Abbreviations volumes. It supports community dictionaries and user-provided dictionary files.
+The dictionary manager handles native Main, Root, and Abbreviations volumes, plus NVDA-format personal speech dictionaries. It supports community dictionaries and user-provided dictionary files.
 
-You can select the target language and dictionary volume, import files, change file priority, reload selected files, or remove them. Later user files take priority over earlier ones. Dictionary activation uses the native engine's dictionary mechanism; regular-expression dictionaries are handled in their own processing layer and settings screen.
+Choose the language and format when importing. Eloquence files use Main, Root, or Abbreviations and Windows-1252; NVDA files use UTF-8 and can apply to all voices or one selected voice. Format detection can be automatic or explicit. Personal NVDA entries run independently of community dictionaries and are applied in order before native pronunciation and optional word segmentation. Existing native Eloquence dictionary sources remain unchanged. Device-protected snapshots retain imported NVDA files so dictionaries continue working before the first unlock after restart.
+
+Later personal files take priority over earlier ones. Dictionary activation uses immutable snapshots, and regular-expression dictionaries remain in their separate processing layer and settings screen.
 
 The ReLoq C submodule supplies the dictionary engine and related source. Preserve its license and third-party notices when distributing modified builds.
 
@@ -93,8 +95,8 @@ This rolling prerelease is intended for testing and is deliberately ignored by t
 ### Publishing a stable Android update
 
 1. Update `versionName` and increase `versionCode` in `AndroidManifest.xml`.
-2. Push a matching tag, for example `v1.2.4`.
-3. The Android workflow verifies that the tag matches `versionName`, builds `apple-eloquence-android-arm64-1.2.4.apk`, and uploads it to the stable GitHub Release tagged `v1.2.4`.
+2. Push a matching tag, for example `v1.2.5`.
+3. The Android workflow verifies that the tag matches `versionName`, builds `apple-eloquence-android-arm64-1.2.5.apk`, and uploads it to the stable GitHub Release tagged `v1.2.5`.
 
 The release page is [Apple Eloquence for Android — GitHub Releases](https://github.com/crucio2211/Apple-Eloquence-for-android./releases). The installed app checks stable releases only; the rolling `android-main` testing prerelease is not offered as a normal app update.
 
@@ -126,7 +128,7 @@ python3 android/build.py \
   --java-home "$JAVA_HOME" \
   --verified-dictionaries \
   --jobs 2 \
-  --output dist/apple-eloquence-android-arm64-1.2.4.apk
+  --output dist/apple-eloquence-android-arm64-1.2.5.apk
 ```
 
 Omit `--verified-dictionaries` when the build should independently refresh the current community dictionary data rather than use an already verified local snapshot. The build script creates the native ARM64 library, generates Java sources, compiles and packages the application, signs the APK, and validates its install-critical resources, signatures, ZIP alignment, and ARM64 ELF layout.

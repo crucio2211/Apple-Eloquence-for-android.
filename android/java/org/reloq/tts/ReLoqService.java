@@ -26,6 +26,9 @@ public final class ReLoqService extends TextToSpeechService {
     private volatile boolean destroyed;
     private boolean dictionariesStarted,legacyFilesCleaned;
     private Future<?> dictionaryStartup;
+    private String speechDictionaryPath;
+    private int speechDictionaryLanguage=-1,speechDictionaryVoice=-1;
+    private SpeechDictionary speechDictionary;
     private volatile PcmQueue active;
     private volatile Catalog.Language selected = Catalog.LANGUAGES[3];
     private RegexDictionaries.Loaded loadedRegex;
@@ -132,7 +135,7 @@ public final class ReLoqService extends TextToSpeechService {
             preferences.getInt("profile",0));
         VoiceSettings settings=Preferences.read(preferences,profile);
         int rate=VoiceSettings.bounded(settings.rate,0,Catalog.RATES.length-1);
-        int[] controls=settings.controls(request.getSpeechRate(),request.getPitch());
+        int[] controls=settings.controls(request.getSpeechRate(),request.getPitch(),item.id);
         String processed=TextPipeline.process(request.getCharSequenceText().toString(),
             preferences.getBoolean("speakEmoji",true),
             VoiceSettings.bounded(preferences.getInt("emojiCompress",3),2,5),
@@ -141,8 +144,7 @@ public final class ReLoqService extends TextToSpeechService {
             preferences.getBoolean("splitCamelCase",true),
             preferences.getBoolean("punctProcessing",false),
             VoiceSettings.bounded(preferences.getInt("punctLevel",2),0,3));
-        processed=applyRegexDictionary(preferences,processed);
-        byte[] utf8=processed.getBytes(StandardCharsets.UTF_8);
+        final String speechText=applyRegexDictionary(preferences,processed);
         PcmQueue queue=new PcmQueue(16);
         active=queue;
         final int dialect=item.id;
@@ -169,9 +171,18 @@ public final class ReLoqService extends TextToSpeechService {
                             throw new IllegalStateException("Direct Boot dictionary snapshot unavailable");
                         long handle=ensureContext();
                         if(handle!=0 && !queue.isCancelled()) {
-                            NativeEngine.dictionary(handle,dictionaries!=null?dictionaries.path:
-                                bootDictionaries!=null?bootDictionaries.path:null);
-                            success=NativeEngine.synthesize(handle,dialect,controls,utf8,queue);
+                            String path=dictionaries!=null?dictionaries.path:
+                                bootDictionaries!=null?bootDictionaries.path:null;
+                            NativeEngine.dictionary(handle,path);
+                            int voice=profile+1;
+                            if(speechDictionary==null||!java.util.Objects.equals(path,speechDictionaryPath)||
+                               dialect!=speechDictionaryLanguage||voice!=speechDictionaryVoice) {
+                                speechDictionary=SpeechDictionary.load(path==null?null:new File(path),dialect,voice);
+                                speechDictionaryPath=path;speechDictionaryLanguage=dialect;speechDictionaryVoice=voice;
+                            }
+                            SpeechDictionary.Result changed=speechDictionary.apply(speechText);
+                            success=NativeEngine.synthesize(handle,dialect,controls,
+                                changed.text.getBytes(StandardCharsets.UTF_8),queue,changed.matched);
                         }
                     }
                 } catch(Throwable error) { Log.e("ReLoq","Synthesis failed",error); }

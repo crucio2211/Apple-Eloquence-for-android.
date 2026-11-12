@@ -1,6 +1,6 @@
 # Apple Eloquence for Android — implementation and build guide
 
-Apple Eloquence for Android is an ARM64 Android application and system Text-to-Speech (TTS) service. This directory contains the Java application, native bridge, Android resources, tests, and build tooling.
+Apple Eloquence for Android is an ARM64 Android application and system Text-to-Speech (TTS) service. This directory contains the Java application, native bridge, Android resources, tests, and build tooling. For the stable 1.2.6 feature list and compatibility notes, see [RELEASE_NOTES_1.2.6.md](RELEASE_NOTES_1.2.6.md).
 
 ## Upstream sources and attribution
 

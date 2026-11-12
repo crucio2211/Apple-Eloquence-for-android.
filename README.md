@@ -18,7 +18,7 @@ This project is a feature-enhanced Android integration built on existing open-so
 | Android TTS integration | Selectable system speech engine |
 | Speech operation | Offline after installation and setup |
 
-The application currently includes **15 language variants** and **eight voice profiles**. Speech output can be configured from 8 kHz to 48 kHz.
+The application currently includes **15 language variants** and **eight voice profiles**. Speech output can be configured from 8 kHz to 48 kHz. See the [1.2.6 stable release notes](android/RELEASE_NOTES_1.2.6.md) for version-specific changes and compatibility details.
 
 ## Features
 

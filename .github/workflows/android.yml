@@ -171,7 +171,8 @@ jobs:
           if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
               --title "Apple Eloquence $RELEASE_TAG" \
-              --notes "Stable Android ARM64 release. Download the APK and follow Android's normal installation flow."
+              --notes "Stable Android ARM64 release. Download the APK and follow Android's normal installation flow." \
+              --target "$GITHUB_SHA"
           fi
           gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' |
             while IFS= read -r asset; do

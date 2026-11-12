@@ -59,15 +59,17 @@ The settings app provides:
 - Eight voice profiles with model, head-size, roughness, breathiness, inflection, and volume controls.
 - Output sample rates of 8, 11.025, 16, 22.05, 32, 44.1, and 48 kHz.
 - An optional equalizer with Balanced, Warm, Bright, Smooth, and Custom presets; five independently configurable filters provide frequency, gain, and bandwidth controls. EQ is off by default and frequencies at or above the Nyquist limit are inactive.
-- Pause behavior, abbreviation dictionary, phrase prediction, ECI tags, original question intonation, and mellow mode.
+- Pause behavior, abbreviation dictionary, phrase prediction, ECI tags, original question intonation, and mellow mode. **Use original Eloquence acoustic timing (5 ms)** can be selected per language; Castilian Spanish and Greek default to the original 5 ms clock, while other languages retain the 1 ms clock unless changed.
 
 Changes are saved as settings are adjusted. The app includes a speech test field and Stop button. To use the service system-wide, select **Apple Eloquence** in Android's Text-to-speech settings.
 
 ## Pronunciation dictionaries
 
-The dictionary manager handles native Main, Root, and Abbreviations volumes. It supports community dictionaries and user-provided dictionary files.
+The dictionary manager handles native Main, Root, and Abbreviations volumes, plus NVDA-format personal speech dictionaries. It supports community dictionaries and user-provided dictionary files.
 
-You can select the target language and dictionary volume, import files, change file priority, reload selected files, or remove them. Later user files take priority over earlier ones. Dictionary activation uses the native engine's dictionary mechanism; regular-expression dictionaries are handled in their own processing layer and settings screen.
+Choose the language and format when importing. Eloquence files use Main, Root, or Abbreviations and Windows-1252; NVDA files use UTF-8 and can apply to all voices or one selected voice. Format detection can be automatic or explicit. Personal NVDA entries run independently of community dictionaries and are applied in order before native pronunciation and optional word segmentation. Existing native Eloquence dictionary sources remain unchanged. Device-protected snapshots retain imported NVDA files so dictionaries continue working before the first unlock after restart.
+
+Later personal files take priority over earlier ones. Dictionary activation uses immutable snapshots, and regular-expression dictionaries remain in their separate processing layer and settings screen.
 
 The ReLoq C submodule supplies the dictionary engine and related source. Preserve its license and third-party notices when distributing modified builds.
 

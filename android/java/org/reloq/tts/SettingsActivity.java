@@ -19,7 +19,7 @@ public final class SettingsActivity extends Activity {
     private boolean ready;
     private LinearLayout content;
     private Spinner languages,profiles,rates,pauses,models,eqPreset,emojiCompress,numberMode,punctLevel;
-    private CheckBox androidVoice,androidRate,androidPitch,boost,tags,abbreviations,prediction,originalQuestions,mellowMode,eqEnabled,speakEmoji,numberProcessing,splitCamelCase,punctProcessing;
+    private CheckBox androidVoice,androidRate,androidPitch,boost,tags,abbreviations,prediction,originalQuestions,mellowMode,originalAcousticClock,eqEnabled,speakEmoji,numberProcessing,splitCamelCase,punctProcessing;
     private RadioButton speedEciMode,speedWpmMode,pitchEciMode,pitchHertzMode;
     private RadioGroup speedModes,pitchModes;
     private Numeric speed,pitch,inflection,volume,head,roughness,breathiness,eqLow,eqMid,eqHigh;
@@ -27,7 +27,7 @@ public final class SettingsActivity extends Activity {
     private TextView pitchHertzLabel,wpmLabel;
     private TextView status;
     private SharedPreferences preferences;
-    private int loadedProfile;
+    private int loadedProfile,clockUiLanguage,acousticClockMask;
     private int pitchHertz=150,manualWpm=190;
     private int eqCustomLow,eqCustomMid,eqCustomHigh;
     private int[][] eqFilters;
@@ -146,6 +146,7 @@ public final class SettingsActivity extends Activity {
         profiles=select(R.string.profile,Catalog.PROFILES,preferences.getInt("profile",0));
         loadedProfile=profiles.getSelectedItemPosition();
         VoiceSettings settings=Preferences.read(preferences,loadedProfile);
+        acousticClockMask=settings.acousticClockMask;clockUiLanguage=languages.getSelectedItemPosition();
         androidRate=check(R.string.android_rate,settings.androidRate);
         speedEciMode=radio(R.string.speed_eci_mode);speedWpmMode=radio(R.string.speed_wpm_mode);
         speedModes=modes(R.string.speed_scale,speedEciMode,speedWpmMode,settings.speedWpmMode);
@@ -209,6 +210,7 @@ public final class SettingsActivity extends Activity {
         rates=select(R.string.sample_rate,new String[]{"8 kHz","11.025 kHz","16 kHz","22.05 kHz",
             "32 kHz","44.1 kHz","48 kHz"},settings.rate);
         mellowMode=check(R.string.mellow_mode,settings.mellowMode);
+        originalAcousticClock=check(R.string.original_acoustic_clock,settings.originalClock(Catalog.LANGUAGES[clockUiLanguage].id));
         heading(R.string.equalizer);
         eqEnabled=check(R.string.equalizer_enabled,settings.eqEnabled);
         eqCustomLow=VoiceSettings.bounded(settings.eqLow,-12,12);
@@ -263,7 +265,11 @@ public final class SettingsActivity extends Activity {
         content.addView(caption);content.addView(text);
         languages.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onNothingSelected(AdapterView<?> parent) {}
-            public void onItemSelected(AdapterView<?> parent,View view,int position,long id) {text.setText(Catalog.LANGUAGES[position].sample);changed();}
+            public void onItemSelected(AdapterView<?> parent,View view,int position,long id) {
+                clockUiLanguage=position;
+                originalAcousticClock.setChecked((acousticClockMask&(1<<position))!=0);
+                text.setText(Catalog.LANGUAGES[position].sample);changed();
+            }
         });
         Button speak=new Button(this);speak.setText(R.string.speak);content.addView(speak);
         speak.setOnClickListener(v -> {
@@ -313,6 +319,11 @@ public final class SettingsActivity extends Activity {
         s.prediction=prediction==null?preferences.getBoolean("prediction",false):prediction.isChecked();
         s.originalQuestions=originalQuestions==null?preferences.getBoolean("originalQuestions",false):originalQuestions.isChecked();
         s.mellowMode=mellowMode==null?preferences.getBoolean("mellowMode",false):mellowMode.isChecked();
+        if(originalAcousticClock!=null) {
+            int bit=1<<clockUiLanguage;
+            acousticClockMask=originalAcousticClock.isChecked()?acousticClockMask|bit:acousticClockMask&~bit;
+        }
+        s.acousticClockMask=originalAcousticClock==null?Preferences.clockMask(preferences):acousticClockMask;
         s.eqEnabled=eqEnabled==null?preferences.getBoolean("eqEnabled",false):eqEnabled.isChecked();
         s.eqPreset=eqPreset==null?preferences.getInt("eqPreset",0):eqPreset.getSelectedItemPosition();
         s.eqLow=eqCustomLow;s.eqMid=eqCustomMid;s.eqHigh=eqCustomHigh;

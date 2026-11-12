@@ -64,12 +64,13 @@ The Android settings include controls for:
 - Splitting camel-case words.
 - Punctuation processing with None, Some, Most, and All levels.
 - A dedicated regular-expression dictionary settings screen with its own enable switch and dictionary editor.
+- Import NVDA-format personal speech dictionaries (UTF-8), with automatic or explicit format selection, per-language targeting, and all-voice or individual voice scope.
 
 ### Pronunciation dictionaries
 
 The dictionary manager supports Main, Root, and Abbreviations volumes, optional community dictionary data, and user-provided dictionary files. Select a language and volume, import files, change source priority, reload files, or remove files. Later user files take priority over earlier files.
 
-Regular-expression dictionaries are managed separately from the native pronunciation-volume manager.
+Regular-expression dictionaries are managed separately from the native pronunciation-volume manager. NVDA speech dictionaries are independent of community dictionaries and are applied before native pronunciation and word segmentation.
 
 ## Install and use
 
@@ -95,10 +96,10 @@ For a stable update, increase `versionName` and `versionCode` in `android/Androi
 This project is an independent, feature-enhanced Android integration. It is not an official Apple application and is not affiliated with or endorsed by the upstream authors.
 
 - **[Mudb0y — Apple Eloquence ELF](https://github.com/Mudb0y/Apple-Eloquence-ELF)**: the Apple Eloquence ELF conversion project and its early Android integration scaffold. The project-authored converter code is MIT-licensed. Its license distinguishes that code from extracted or converted Apple binary artifacts, which remain subject to Apple's terms.
-- **[hozosch — ReLoq C](https://github.com/hozosch/Reloq-C)**: the Android application and native pronunciation/acoustic core used as the principal Android integration baseline. This repository's `android/reloq-core` submodule is pinned to upstream commit [`639b69eb51d0e05c51f6dcce62fb2004f32b9471`](https://github.com/hozosch/Reloq-C/commit/639b69eb51d0e05c51f6dcce62fb2004f32b9471).
+- **[hozosch — ReLoq C](https://github.com/hozosch/Reloq-C)**: the Android application and native pronunciation/acoustic core used as the principal Android integration baseline. This repository's `android/reloq-core` submodule is pinned to upstream commit [`d7ddc963136e67ab693150ef54b68302f6856f01`](https://github.com/hozosch/Reloq-C/commit/d7ddc963136e67ab693150ef54b68302f6856f01).
 - **[NVDA-IBMTTS-Driver](https://github.com/davidacm/NVDA-IBMTTS-Driver)** and other upstream projects retain their own attribution and license terms wherever their code or data is used.
 
-The enhancements maintained here include EVDroid-compatible number, emoji, and punctuation processing, camel-case handling, regular-expression dictionary support, and the Android application's integration and update flow. Upstream code remains credited to its respective authors.
+The enhancements maintained here include EVDroid-compatible number, emoji, and punctuation processing, camel-case handling, regular-expression and NVDA speech-dictionary support, per-language original Eloquence acoustic timing, and the Android application's integration and update flow. Upstream code remains credited to its respective authors.
 
 ## Build and development
 

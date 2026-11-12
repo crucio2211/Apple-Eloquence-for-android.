@@ -120,4 +120,9 @@
     <string name="not_now">後で</string>
     <string name="update_notification_title">Apple Eloquence の更新</string>
     <string name="update_notification_body">バージョン %1$s が利用可能です。タップして確認し、ダウンロードします。</string>
+    <string name="original_acoustic_clock">Use original Eloquence acoustic timing for the selected language (5 ms)</string>
+    <string name="dictionary_format">Dictionary file format</string>
+    <string name="dictionary_voice">Voices for NVDA dictionaries</string>
+    <string name="dictionary_all_voices">All voices</string>
+    <string-array name="dictionary_formats"><item>Detect automatically</item><item>NVDA</item><item>Eloquence</item></string-array>
 </resources>

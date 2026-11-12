@@ -12,10 +12,6 @@ import tempfile
 from codegen import generate
 
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/"nvda"))
-from _reloq_eci_direct import DirectEciEngine,NATIVE_SPEED
-
-
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--java-home",type=Path,default=os.environ.get("JAVA_HOME"))
@@ -46,6 +42,8 @@ def main():
         print(result.stdout,end="")
         controls=list(map(int,result.stdout.splitlines()[-1].split("\t")[1:]))
     if a.settings_only:return
+    sys.path.insert(0,str(ROOT/"nvda"))
+    from _reloq_eci_direct import DirectEciEngine,NATIVE_SPEED
     texts=[("The clear morning light was coming through the window while we talked about "
           "the work that needed to be done and the places we hoped to visit during "
           "the coming summer when the weather would be warm and the days would be long."),
